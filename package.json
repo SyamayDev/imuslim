@@ -1,0 +1,53 @@
+{
+  "name": "imuslim",
+  "private": true,
+  "version": "2.0.0",
+  "description": "iMuslim — aplikasi web Islami: Al-Qur'an, jadwal sholat, doa, hadits, kalender Hijriah, arah kiblat, dan kalkulator zakat.",
+  "type": "module",
+  "homepage": "https://syamaydev.github.io/muslimweb/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/SyamayDev/muslimweb.git"
+  },
+  "engines": {
+    "node": ">=20.19"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build && node scripts/postbuild.mjs",
+    "preview": "node scripts/serve-dist.mjs",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "playwright test",
+    "lighthouse": "node scripts/lighthouse.mjs",
+    "brand": "node scripts/generate-brand.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
+    "@fontsource/amiri-quran": "^5.3.0",
+    "@fontsource/fraunces": "^5.3.0",
+    "lucide-react": "^1.61.0",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "react-router-dom": "^7.18.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@vitejs/plugin-react": "^6.1.2",
+    "eslint": "^10.13.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.7",
+    "globals": "^17.13.0",
+    "jsdom": "^29.1.1",
+    "lighthouse": "^13.5.0",
+    "opentype.js": "^2.0.0",
+    "sharp": "^0.35.5",
+    "vite": "^8.3.5",
+    "vitest": "^5.0.5"
+  }
+}

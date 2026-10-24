@@ -1,0 +1,238 @@
+/* ==========================================================================
+   Jadwal sholat
+   ========================================================================== */
+
+.sholat-city {
+  display: grid;
+  gap: 12px;
+  margin-bottom: var(--space-5);
+}
+.sholat-city__name {
+  color: var(--brand-ink);
+}
+
+.sholat-tabs {
+  margin-bottom: var(--space-4);
+}
+
+/* Hari ini */
+.sholat-today {
+  display: grid;
+  gap: var(--space-4);
+}
+.today-hero {
+  display: grid;
+  gap: 14px;
+  padding: clamp(20px, 4vw, 32px);
+  border-radius: var(--radius-xl);
+  background: linear-gradient(160deg, var(--hero-bg), var(--hero-bg-2));
+  color: var(--hero-ink);
+}
+.today-hero__date {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--hero-ink-2);
+}
+.today-hero__title {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-3xl);
+  line-height: 1.15;
+}
+.today-hero__title .muted {
+  color: var(--hero-ink-2);
+}
+.today-hero__title small {
+  font-family: var(--font-sans);
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--hero-ink-2);
+}
+.today-hero__countdown {
+  margin-top: 4px;
+  font-size: clamp(2rem, 1.4rem + 3vw, 3.4rem);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: #e6c47e;
+  line-height: 1.1;
+}
+.today-progress {
+  height: 4px;
+  margin-top: 12px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--hero-ink) 20%, transparent);
+  overflow: hidden;
+}
+.today-progress i {
+  display: block;
+  height: 100%;
+  background: #e6c47e;
+  border-radius: inherit;
+  transform-origin: left;
+  transition: transform 1s linear;
+}
+.today-hero__tz {
+  background: color-mix(in srgb, var(--hero-ink) 10%, transparent);
+  color: var(--hero-ink);
+}
+
+.times {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+@media (min-width: 640px) {
+  .times {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1100px) {
+  .times {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+.time {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas:
+    'icon label value'
+    'icon state value';
+  align-items: center;
+  column-gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition: background-color var(--dur-2) var(--ease-out);
+}
+.time__icon {
+  grid-area: icon;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  color: var(--ink-2);
+}
+.time__icon svg {
+  width: 18px;
+  height: 18px;
+}
+.time__label {
+  grid-area: label;
+  font-weight: 700;
+}
+.time__value {
+  grid-area: value;
+  font-size: var(--fs-xl);
+  font-weight: 700;
+}
+.time__state {
+  grid-area: state;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  min-height: 1em;
+}
+.time.is-minor .time__label {
+  font-weight: 600;
+  color: var(--ink-2);
+}
+.time.is-minor .time__value {
+  font-size: var(--fs-lg);
+  color: var(--ink-2);
+}
+.time.is-passed {
+  background: var(--surface-2);
+  border-color: transparent;
+}
+.time.is-passed .time__value,
+.time.is-passed .time__label {
+  color: var(--ink-3);
+}
+.time.is-next {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+  box-shadow: 0 0 0 1px var(--brand);
+}
+.time.is-next .time__icon {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.time.is-next .time__state {
+  color: var(--brand-ink);
+  font-weight: 700;
+}
+.time.is-current .time__state {
+  color: var(--gold);
+  font-weight: 700;
+}
+
+/* Bulanan */
+.month__head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.month__title {
+  font-size: var(--fs-xl);
+  min-width: 10ch;
+  text-align: center;
+  display: grid;
+}
+.month__sub {
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--ink-3);
+}
+.month__table {
+  max-height: 70vh;
+}
+.month__day {
+  display: block;
+  font-weight: 700;
+}
+.month__hijri {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--gold);
+  letter-spacing: 0;
+  text-transform: none;
+}
+.month .table tbody th {
+  text-align: left;
+  font-weight: 600;
+  padding: 8px 14px;
+  border-bottom: 1px solid var(--line);
+  white-space: nowrap;
+  position: sticky;
+  left: 0;
+  background: var(--surface);
+  z-index: 1;
+}
+.month .table tbody tr.is-today th {
+  background: var(--brand-soft);
+}
+.month .table thead th:first-child {
+  z-index: 2;
+  left: 0;
+}
+
+.sholat-adzan {
+  margin-top: var(--space-7);
+}
+.adzan-preview {
+  display: grid;
+  gap: 10px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+.adzan-preview .field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}

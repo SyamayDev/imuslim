@@ -1,0 +1,304 @@
+/* ==========================================================================
+   Kalender
+   ========================================================================== */
+
+.kal-layout {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 1024px) {
+  .kal-layout {
+    grid-template-columns: minmax(0, 1.6fr) minmax(300px, 1fr);
+    align-items: start;
+  }
+}
+.kal-main {
+  padding: clamp(14px, 3vw, 24px);
+}
+.kal-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.kal-head__title {
+  text-align: center;
+}
+.kal-head__title h2 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-2xl);
+}
+.kal-head__title p {
+  font-size: var(--fs-sm);
+  font-weight: 650;
+  color: var(--gold);
+}
+.kal-controls {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin: 14px 0 10px;
+}
+.kal-controls .select {
+  min-height: 38px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: var(--fs-sm);
+}
+
+.kal-grid {
+  width: 100%;
+  table-layout: fixed;
+}
+.kal-grid th {
+  padding: 8px 0;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ink-3);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.kal-grid th abbr {
+  text-decoration: none;
+}
+.kal-grid th.is-friday {
+  color: var(--brand-ink);
+}
+.kal-grid td {
+  padding: 2px;
+}
+.kal-day {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  align-content: center;
+  gap: 1px;
+  width: 100%;
+  aspect-ratio: 1 / 1.05;
+  min-height: 44px;
+  padding: 4px 2px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink);
+  transition:
+    background-color var(--dur-2) var(--ease-out),
+    border-color var(--dur-2) var(--ease-out),
+    transform var(--dur-1) var(--ease-out);
+}
+.kal-day:hover {
+  background: var(--surface-2);
+}
+.kal-day:active {
+  transform: scale(0.95);
+}
+.kal-day__g {
+  font-size: clamp(0.95rem, 0.8rem + 0.8vw, 1.25rem);
+  font-weight: 700;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.kal-day__h {
+  font-size: clamp(0.6rem, 0.5rem + 0.4vw, 0.75rem);
+  font-weight: 600;
+  color: var(--gold);
+  line-height: 1.1;
+  white-space: nowrap;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kal-day.is-friday .kal-day__g {
+  color: var(--brand-ink);
+}
+.kal-day.is-today {
+  border-color: var(--brand);
+}
+.kal-day.is-selected {
+  background: var(--brand);
+  border-color: var(--brand);
+  color: var(--on-brand);
+}
+.kal-day.is-selected .kal-day__g,
+.kal-day.is-selected .kal-day__h {
+  color: var(--on-brand);
+}
+.kal-day__marks {
+  display: flex;
+  gap: 3px;
+  height: 6px;
+}
+.mark-event,
+.mark-islamic {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+.mark-event {
+  background: var(--brand);
+}
+.mark-islamic {
+  background: var(--gold-line);
+  border-radius: 1px;
+  transform: rotate(45deg) scale(0.9);
+}
+.kal-day.is-selected .mark-event {
+  background: var(--on-brand);
+}
+
+.kal-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+  margin-top: 12px;
+  font-size: var(--fs-xs);
+  color: var(--ink-2);
+}
+.kal-legend li {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.kal-legend__today {
+  width: 12px;
+  height: 12px;
+  border: 2px solid var(--brand);
+  border-radius: 4px;
+}
+
+.kal-side {
+  display: grid;
+  gap: 16px;
+}
+.day-panel {
+  display: grid;
+  gap: 4px;
+  animation: fade-up var(--dur-3) var(--ease-out);
+}
+.day-panel__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-xl);
+}
+.day-panel__hijri {
+  font-weight: 700;
+  color: var(--gold);
+}
+.day-panel__islamic {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+  font-weight: 650;
+}
+.day-panel__islamic svg {
+  width: 16px;
+  height: 16px;
+  color: var(--gold);
+}
+.day-panel__events {
+  display: grid;
+  gap: 10px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.day-panel__events ul {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.day-panel__events .btn {
+  justify-self: start;
+}
+.day-panel__sub {
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.event-row {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 8px 4px 8px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+}
+.event-row__text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  font-size: var(--fs-sm);
+}
+.event-row__text strong {
+  overflow-wrap: anywhere;
+}
+
+.hijri-info__value {
+  margin-top: 6px;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-xl);
+}
+
+.kal-lists {
+  display: grid;
+  gap: 16px;
+  margin-top: 16px;
+}
+@media (min-width: 900px) {
+  .kal-lists {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+.agenda {
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  margin-top: 10px;
+}
+.agenda__item {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  grid-template-areas:
+    'when name'
+    'when date';
+  column-gap: 14px;
+  align-items: center;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: left;
+}
+.agenda__item:hover {
+  background: var(--surface-2);
+}
+.agenda__when {
+  grid-area: when;
+  min-width: 82px;
+  padding: 4px 8px;
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ink-2);
+  text-align: center;
+}
+.agenda__when.is-first {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.agenda__name {
+  grid-area: name;
+  font-weight: 700;
+}
+.agenda__date {
+  grid-area: date;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}

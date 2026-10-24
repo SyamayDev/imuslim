@@ -1,0 +1,420 @@
+{
+  "measuredAt": "2026-10-24T15:04:48.980Z",
+  "lighthouse": "13.5.0",
+  "chrome": "Chrome/156.0.0.0",
+  "results": [
+    {
+      "formFactor": "mobile",
+      "route": "/",
+      "scores": {
+        "performance": 85,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.1 s",
+        "LCP": "4.0 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.1 s)",
+        "largest-contentful-paint (4.0 s)",
+        "interactive (4.0 s)",
+        "unused-javascript (Est savings of 32 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 150 ms)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/quran/",
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.0 s",
+        "LCP": "2.4 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.0 s)",
+        "unused-javascript (Est savings of 34 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (0.5)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/quran/1/",
+      "scores": {
+        "performance": 85,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.1 s",
+        "LCP": "4.1 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.1 s)",
+        "largest-contentful-paint (4.1 s)",
+        "interactive (4.1 s)",
+        "unused-javascript (Est savings of 32 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 150 ms)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/sholat/",
+      "scores": {
+        "performance": 90,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.1 s",
+        "LCP": "3.4 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.1 s)",
+        "largest-contentful-paint (3.4 s)",
+        "unused-javascript (Est savings of 32 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 150 ms)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/doa/",
+      "scores": {
+        "performance": 82,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.0 s",
+        "LCP": "4.7 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.0 s)",
+        "largest-contentful-paint (4.7 s)",
+        "interactive (4.7 s)",
+        "unused-javascript (Est savings of 31 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 150 ms)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/hadits/",
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.0 s",
+        "LCP": "2.4 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.0 s)",
+        "unused-javascript (Est savings of 32 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 150 ms)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/kalender/",
+      "scores": {
+        "performance": 90,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.0 s",
+        "LCP": "3.4 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.0 s)",
+        "largest-contentful-paint (3.4 s)",
+        "unused-javascript (Est savings of 33 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 150 ms)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/kiblat/",
+      "scores": {
+        "performance": 96,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "2.0 s",
+        "LCP": "2.4 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (2.0 s)",
+        "unused-javascript (Est savings of 34 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 150 ms)"
+      ]
+    },
+    {
+      "formFactor": "mobile",
+      "route": "/zakat/",
+      "scores": {
+        "performance": 97,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "1.8 s",
+        "LCP": "2.3 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "first-contentful-paint (1.8 s)",
+        "unused-javascript (Est savings of 34 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (0.5)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.5 s",
+        "LCP": "0.6 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 33 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (0.5)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/quran/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.5 s",
+        "LCP": "0.6 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 34 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (0.5)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/quran/1/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.5 s",
+        "LCP": "0.6 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 32 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 40 ms)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/sholat/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.5 s",
+        "LCP": "0.6 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 32 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 40 ms)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/doa/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.5 s",
+        "LCP": "0.6 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 31 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 40 ms)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/hadits/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.4 s",
+        "LCP": "0.5 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 32 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (0.5)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/kalender/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.4 s",
+        "LCP": "0.5 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 33 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (0.5)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/kiblat/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.4 s",
+        "LCP": "0.5 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 34 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (0.5)"
+      ]
+    },
+    {
+      "formFactor": "desktop",
+      "route": "/zakat/",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "metrics": {
+        "FCP": "0.4 s",
+        "LCP": "0.5 s",
+        "TBT": "0 ms",
+        "CLS": "0"
+      },
+      "failing": [
+        "unused-javascript (Est savings of 34 KiB)",
+        "cache-insight (Est savings of 1 KiB)",
+        "network-dependency-tree-insight (0)",
+        "render-blocking-insight (Est savings of 40 ms)"
+      ]
+    }
+  ]
+}

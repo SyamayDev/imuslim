@@ -1,0 +1,22 @@
+# Dependensi & hasil build
+node_modules/
+dist/
+coverage/
+
+# Laporan pengujian
+playwright-report/
+test-results/
+reports/lighthouse/*.html
+reports/lighthouse/*.json
+!reports/lighthouse/summary.json
+
+# Editor & OS
+.vscode/*
+!.vscode/extensions.json
+.idea/
+.DS_Store
+Thumbs.db
+*.log
+*.local
+.env
+.env.*

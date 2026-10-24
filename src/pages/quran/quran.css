@@ -1,0 +1,457 @@
+/* ==========================================================================
+   Al-Qur'an
+   ========================================================================== */
+
+.quran-tools {
+  display: grid;
+  gap: 12px;
+  margin: var(--space-5) 0 var(--space-4);
+}
+@media (min-width: 900px) {
+  .quran-tools {
+    grid-template-columns: auto minmax(280px, 420px);
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+.jump-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  margin-bottom: 14px;
+  border-radius: var(--radius-md);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  text-decoration: none;
+  animation: fade-up var(--dur-3) var(--ease-out);
+}
+.jump-card svg {
+  width: 18px;
+  height: 18px;
+}
+.jump-card span {
+  flex: 1;
+}
+
+/* Penanda terakhir dibaca */
+.last-read {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 6px 6px 6px;
+  border-radius: var(--radius-lg);
+  background: var(--gold-soft);
+}
+.last-read__link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  border-radius: var(--radius-md);
+  color: var(--ink);
+  text-decoration: none;
+}
+.last-read__icon {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--gold);
+  flex-shrink: 0;
+}
+.last-read__icon svg {
+  width: 18px;
+  height: 18px;
+}
+.last-read__label {
+  display: block;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--gold);
+}
+.last-read__title {
+  display: block;
+  font-weight: 700;
+}
+.last-read__cta {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: var(--fs-sm);
+  font-weight: 700;
+  color: var(--brand-ink);
+  white-space: nowrap;
+}
+.last-read__cta svg {
+  width: 16px;
+  height: 16px;
+}
+@media (max-width: 479px) {
+  .last-read__cta {
+    display: none;
+  }
+}
+
+/* Daftar surah */
+.surah-grid {
+  list-style: none;
+  display: grid;
+  gap: 8px;
+}
+@media (min-width: 720px) {
+  .surah-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1200px) {
+  .surah-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+.surah-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    background-color var(--dur-2) var(--ease-out);
+}
+.surah-row:hover {
+  border-color: var(--line-strong);
+}
+.surah-row__link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 6px 12px 12px;
+  color: inherit;
+  text-decoration: none;
+}
+.surah-row__text {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+}
+.surah-row__latin {
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surah-row__meta {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.surah-row__arabic {
+  font-family: var(--font-arabic);
+  font-size: 1.45rem;
+  line-height: 1.4;
+  color: var(--brand-ink);
+  flex-shrink: 0;
+}
+.surah-row__fav {
+  margin-right: 6px;
+  color: var(--ink-3);
+}
+.surah-row__fav.is-active {
+  color: var(--gold);
+  background: var(--gold-soft);
+}
+
+.bookmark-list {
+  list-style: none;
+  display: grid;
+  gap: 6px;
+}
+.bookmark-list li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-right: 6px;
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  border: 1px solid var(--line);
+}
+.bookmark-list .row-link {
+  flex: 1;
+  min-width: 0;
+}
+
+.source-note {
+  margin-top: var(--space-6);
+}
+
+/* ---------- Halaman surah ---------- */
+.surah-head {
+  display: grid;
+  gap: 12px;
+  margin-bottom: var(--space-5);
+}
+.surah-head__card {
+  position: relative;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: clamp(24px, 5vw, 40px) 20px;
+  border-radius: var(--radius-xl);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  text-align: center;
+  overflow: hidden;
+}
+.surah-head__arabic {
+  font-family: var(--font-arabic);
+  font-size: clamp(2.2rem, 1.6rem + 3vw, 3.2rem);
+  line-height: 1.5;
+  color: var(--brand-ink);
+}
+.surah-head__title {
+  font-family: var(--font-display);
+  font-size: var(--fs-3xl);
+  font-weight: 600;
+}
+.surah-head__meaning {
+  color: var(--ink-2);
+}
+.surah-head__actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 14px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.surah-bar {
+  position: sticky;
+  top: calc(var(--header-h) + env(safe-area-inset-top));
+  z-index: 20;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 10px;
+  margin: 12px 0;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border: 1px solid var(--line);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+@media (min-width: 768px) {
+  .surah-bar {
+    top: 10px;
+  }
+}
+.surah-bar label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-xs);
+  font-weight: 700;
+  color: var(--ink-2);
+}
+.surah-bar__qari {
+  flex: 1;
+  min-width: 200px;
+}
+.surah-bar .select {
+  min-height: 38px;
+  padding-top: 6px;
+  padding-bottom: 6px;
+  font-size: var(--fs-sm);
+}
+.surah-bar__jump .select {
+  width: 96px;
+}
+
+.surah-info {
+  margin: 8px 0 16px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+}
+.surah-info summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 12px 16px;
+  font-weight: 700;
+  cursor: pointer;
+  list-style: none;
+}
+.surah-info summary::-webkit-details-marker {
+  display: none;
+}
+.surah-info summary svg {
+  width: 18px;
+  height: 18px;
+  transition: transform var(--dur-2) var(--ease-out);
+}
+.surah-info[open] summary svg {
+  transform: rotate(180deg);
+}
+.surah-info__text {
+  padding: 0 16px 16px;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+}
+
+.basmalah {
+  text-align: center;
+  color: var(--brand-ink);
+  margin: 18px 0 8px;
+}
+.surah-note {
+  text-align: center;
+  color: var(--ink-3);
+  font-size: var(--fs-sm);
+  margin: 12px 0;
+}
+
+.ayah-list {
+  list-style: none;
+  display: grid;
+}
+.ayah {
+  display: grid;
+  gap: 12px;
+  padding: 20px 4px 24px;
+  border-bottom: 1px solid var(--line);
+  scroll-margin-top: calc(var(--header-h) + 80px);
+  content-visibility: auto;
+  contain-intrinsic-size: auto 260px;
+  transition: background-color var(--dur-3) var(--ease-out);
+  border-radius: var(--radius-sm);
+}
+@media (min-width: 768px) {
+  .ayah {
+    scroll-margin-top: 80px;
+  }
+}
+.ayah.is-active {
+  background: color-mix(in srgb, var(--brand-soft) 55%, transparent);
+  padding-inline: 12px;
+}
+.ayah.is-highlighted {
+  background: var(--gold-soft);
+  padding-inline: 12px;
+}
+.ayah__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ayah__actions {
+  margin-left: auto;
+  display: flex;
+  gap: 2px;
+  flex-wrap: wrap;
+}
+.ayah__arabic {
+  padding-top: 4px;
+}
+.ayah__latin {
+  color: var(--brand-ink);
+  font-size: var(--fs-sm);
+  line-height: 1.7;
+  font-style: italic;
+}
+.ayah__translation {
+  color: var(--ink);
+  line-height: 1.75;
+}
+
+.tafsir {
+  display: grid;
+  gap: 10px;
+  padding: 16px;
+  border-radius: var(--radius-md);
+  background: var(--surface-2);
+  border-left: 3px solid var(--gold-line);
+  animation: fade-up var(--dur-3) var(--ease-out);
+}
+.tafsir__label {
+  font-size: var(--fs-xs);
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--gold);
+}
+.tafsir__text {
+  display: grid;
+  gap: 10px;
+  font-size: var(--fs-sm);
+  line-height: 1.75;
+  color: var(--ink-2);
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.follow-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  cursor: pointer;
+}
+.follow-toggle input {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--brand);
+}
+
+.settings-preview {
+  margin: 8px 0 12px;
+  padding: 12px;
+  border-radius: var(--radius-sm);
+  background: var(--surface-2);
+  text-align: center;
+}
+
+/* Bilah navigasi bacaan ringkas di ponsel: satu baris, label hanya untuk pembaca layar. */
+@media (max-width: 560px) {
+  .surah-bar {
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding: 8px;
+  }
+  .surah-bar label > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+  .surah-bar__jump {
+    flex: 0 0 auto;
+  }
+  .surah-bar__jump .select {
+    width: 92px;
+  }
+  .surah-bar__qari {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .surah-bar__qari .select {
+    min-width: 0;
+  }
+}

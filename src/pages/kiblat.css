@@ -1,0 +1,212 @@
+/* ==========================================================================
+   Kiblat
+   ========================================================================== */
+
+.kiblat-layout {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 960px) {
+  .kiblat-layout {
+    grid-template-columns: minmax(0, 1.3fr) minmax(300px, 1fr);
+    align-items: start;
+  }
+}
+
+.compass-panel {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  text-align: center;
+}
+.compass-panel--empty {
+  padding-block: 48px;
+  gap: 8px;
+}
+.compass-panel__placeholder {
+  width: 64px;
+  height: 64px;
+  color: var(--gold-line);
+  margin-bottom: 8px;
+}
+.compass-readout__deg {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: clamp(2.6rem, 2rem + 3vw, 3.8rem);
+  line-height: 1;
+  color: var(--brand-ink);
+}
+.compass-readout__desc {
+  margin-top: 6px;
+  color: var(--ink-2);
+}
+.compass-readout__meta {
+  margin-top: 4px;
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+  max-width: 46ch;
+}
+
+.compass {
+  position: relative;
+  width: min(100%, 340px);
+  aspect-ratio: 1;
+}
+.compass svg {
+  width: 100%;
+  height: 100%;
+  transition: transform 0.25s linear;
+}
+.compass__ring {
+  fill: var(--surface-2);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+.compass__inner {
+  fill: var(--surface);
+  stroke: var(--line);
+}
+.compass__tick {
+  stroke: var(--ink-3);
+  stroke-width: 1;
+}
+.compass__tick--major {
+  stroke: var(--ink-2);
+  stroke-width: 2;
+}
+.compass__card {
+  font-family: var(--font-sans);
+  font-size: 18px;
+  font-weight: 750;
+  fill: var(--ink-2);
+}
+.compass__card.is-north {
+  fill: var(--danger);
+}
+.compass__needle {
+  stroke: var(--brand);
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+.compass__kaaba {
+  fill: #1d1d1b;
+  stroke: var(--gold-line);
+  stroke-width: 1.5;
+}
+.compass__kaaba-band {
+  fill: var(--gold-line);
+}
+.compass__hub {
+  fill: var(--brand);
+  stroke: var(--surface);
+  stroke-width: 3;
+}
+.compass__device {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  top: -6px;
+  width: 0;
+  height: 0;
+  margin-left: -10px;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 16px solid var(--ink);
+}
+.compass.is-aligned .compass__ring {
+  stroke: var(--success);
+  stroke-width: 4;
+}
+.compass.is-aligned .compass__device {
+  border-top-color: var(--success);
+}
+
+.compass-actions {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+.compass-status {
+  min-height: 1.4em;
+  max-width: 44ch;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+
+.location-panel {
+  display: grid;
+  gap: 12px;
+}
+.location-panel__status {
+  min-height: 1.2em;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+}
+.location-panel__status.is-error {
+  color: var(--danger);
+}
+.location-search {
+  display: grid;
+  gap: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.location-search__row {
+  display: flex;
+  gap: 8px;
+}
+.location-search__row .input {
+  flex: 1;
+}
+.place-results {
+  list-style: none;
+  display: grid;
+  gap: 4px;
+  margin-top: 4px;
+}
+.place-results button {
+  width: 100%;
+  display: grid;
+  gap: 2px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  text-align: left;
+  font-size: var(--fs-sm);
+}
+.place-results button:hover {
+  border-color: var(--brand);
+}
+.place-results span {
+  font-size: var(--fs-xs);
+  color: var(--ink-3);
+}
+.manual-coords {
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+.manual-coords fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.manual-coords__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.kiblat-howto {
+  margin-top: 16px;
+}
+.kiblat-howto ol {
+  display: grid;
+  gap: 8px;
+  margin-top: 10px;
+  padding-left: 20px;
+  color: var(--ink-2);
+  font-size: var(--fs-sm);
+}
