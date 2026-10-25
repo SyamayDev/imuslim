@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://syamaydev.github.io/imuslim/sitemap.xml
