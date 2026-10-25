@@ -8,6 +8,7 @@ import { Dialog } from '../components/ui/Dialog.jsx';
 import { SwitchRow } from '../components/ui/Switch.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { REPO_URL } from '../app/site.js';
+import { AndroidAppRow, NativeAppRow } from '../features/android/AppRows.jsx';
 import { CityPicker } from '../features/sholat/CityPicker.jsx';
 import { useInstallPrompt } from '../hooks/useBrowser.js';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
@@ -160,14 +161,16 @@ export default function Pengaturan() {
         </Section>
 
         <Section id="s-aplikasi" title="Aplikasi">
+          {__NATIVE__ ? <NativeAppRow /> : <AndroidAppRow />}
+          {!__NATIVE__ && (
           <div className="setting-row">
             <div className="setting-row__text">
-              <span className="setting-row__label">Pasang iMuslim</span>
+              <span className="setting-row__label">Pasang versi web</span>
               <p className="setting-row__desc">
                 {install.installed
                   ? 'iMuslim sedang berjalan sebagai aplikasi terpasang.'
                   : install.available
-                    ? 'Tambahkan ke layar utama agar terbuka seperti aplikasi, termasuk saat koneksi terputus untuk data yang pernah dimuat.'
+                    ? 'Tambahkan ke layar utama agar terbuka seperti aplikasi (iPhone, komputer, atau bila tidak ingin memasang APK). Adzan saat ditutup memakai notifikasi browser.'
                     : 'Bila tombol tidak muncul, gunakan menu browser “Tambahkan ke layar utama” / “Install app”.'}
               </p>
             </div>
@@ -184,6 +187,7 @@ export default function Pengaturan() {
               </button>
             )}
           </div>
+          )}
           <div className="setting-row">
             <div className="setting-row__text">
               <span className="setting-row__label">Cache data</span>

@@ -40,6 +40,7 @@ Al-Qur'an dengan audio & tafsir · Jadwal sholat & imsakiyah · Doa & dzikir · 
 - [Arsitektur](#arsitektur)
 - [Sumber data & API](#sumber-data--api)
 - [Desain, corak & animasi](#desain-corak--animasi)
+- [Aplikasi Android (APK)](#aplikasi-android-apk)
 - [Notifikasi saat iMuslim ditutup (Web Push)](#notifikasi-saat-imuslim-ditutup-web-push)
 - [Kualitas: aksesibilitas, tes, Lighthouse](#kualitas-aksesibilitas-tes-lighthouse)
 - [Film motion graphic](#film-motion-graphic)
@@ -99,13 +100,13 @@ iMuslim adalah aplikasi web (PWA) untuk ibadah harian dalam Bahasa Indonesia, di
 |---|---|
 | **Beranda** | Sapaan sesuai waktu, tanggal Masehi + Hijriah, kartu waktu sholat berikutnya dengan cincin progres & hitung mundur, *lanjutkan membaca*, acara hari ini, ayat & hadits hari ini (dari API), rekomendasi kajian |
 | **Al-Qur'an** | 114 surah, cari nama/arti/nomor/teks Arab, pencarian suara, pintasan `2:255`, favorit, paginasi · kepala surah bergaya mushaf · teks Arab, latin, terjemahan Kemenag, tafsir per ayat · murattal satu surah atau per ayat (berlanjut otomatis) dengan 6 qari · tandai terakhir dibaca, simpan ayat, salin, bagikan · ukuran huruf Arab · surah panjang dirender bertahap agar tetap ringan |
-| **Jadwal sholat** | 517 dari 518 kota/kabupaten (satu kota tidak punya data di sumber), pencarian kota, *Gunakan lokasi saya* (opsional), jadwal hari ini dengan status & hitung mundur, tabel imsakiyah bulanan dengan kolom Hijriah, zona WIB/WITA/WIT, adzan tepat waktu saat iMuslim terbuka, **notifikasi tepat waktu walau iMuslim ditutup** (Web Push; ketuk untuk memutar adzan) |
+| **Jadwal sholat** | 517 dari 518 kota/kabupaten (satu kota tidak punya data di sumber), pencarian kota, *Gunakan lokasi saya* (opsional), jadwal hari ini dengan status & hitung mundur, tabel imsakiyah bulanan dengan kolom Hijriah, zona WIB/WITA/WIT, adzan tepat waktu saat iMuslim terbuka · **aplikasi Android: adzan berbunyi sendiri walau aplikasi ditutup** · versi web: notifikasi tepat waktu walau ditutup (Web Push; ketuk untuk memutar adzan) |
 | **Doa & dzikir** | Dua koleksi: 227 doa equran.id (dengan latin & dalil) dan 108 doa myQuran · cari, filter kategori, paginasi, simpan, salin, bagikan |
 | **Hadits** | 9 kitab (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasai, Ibnu Majah, Ahmad, Malik, Darimi) + Arbain An-Nawawi · paginasi, lompat ke nomor, simpan, salin, bagikan |
 | **Kalender** | Masehi & Hijriah berdampingan, navigasi bulan/tahun & keyboard, hari besar Islam (perkiraan), acara pribadi (tambah/ubah/hapus/bagikan), pembanding tanggal myQuran |
 | **Kiblat** | Cukup satu tombol **"Gunakan lokasi saya"**: arah & jarak ke Ka'bah dihitung lokal di perangkat · bila izin lokasi ditolak, ketik nama kota (tanpa istilah lintang/bujur) · kompas perangkat (termasuk izin iOS) dengan deteksi sensor yang jujur |
 | **Zakat** | Penghasilan, maal (dengan haul & utang), fitrah · harga emas referensi bertanggal atau isi manual · rumus & asumsi ditampilkan |
-| **Pengaturan** | Tema terang/gelap (awalnya mengikuti perangkat), layar penuh, ukuran teks Arab, latin/terjemahan, qari, kota, pengingat, penyesuaian Hijriah, nama sapaan, pasang aplikasi, ekspor/impor/hapus data lokal |
+| **Pengaturan** | Tema terang/gelap (awalnya mengikuti perangkat), layar penuh, ukuran teks Arab, latin/terjemahan, qari, kota, pengingat, penyesuaian Hijriah, nama sapaan, unduh aplikasi Android (APK) atau pasang versi web (PWA), ekspor/impor/hapus data lokal |
 | **Umum** | Navigasi bawah di ponsel, rail/sidebar di tablet & desktop, tombol layar penuh, PWA yang bisa dipasang, halaman yang pernah dibuka tetap tersedia offline, pemutar audio tunggal (tidak pernah bertumpuk) dengan kontrol layar kunci |
 
 ## Mulai cepat
@@ -138,6 +139,8 @@ npm run build && npm run preview   # http://localhost:4173/imuslim/
 | `npm run test:e2e` | Playwright terhadap `dist/` di desktop & ponsel (butuh `npm run build` dan Google Chrome, atau `PW_CHANNEL=bundled` setelah `npx playwright install chromium`) |
 | `npm run lighthouse` | Lighthouse mobile & desktop untuk route utama → `reports/lighthouse/` (butuh Chrome; set `CHROME_PATH` bila perlu) |
 | `npm run brand` | Membuat ulang logo, favicon, ikon PWA, dan gambar OG dari `scripts/brand-geometry.mjs` |
+| `npm run android:build` | APK Android rilis bertanda tangan → `public/download/imuslim.apk` (lihat [Aplikasi Android](#aplikasi-android-apk)) |
+| `npm run android:debug` | APK debug untuk pengujian (WebView bisa diperiksa lewat `chrome://inspect`) |
 | `node scripts/screenshots.mjs` | Membuat ulang tangkapan layar README di `docs/screenshots/` |
 | `node scripts/fetch-static-data.mjs` | Mengambil ulang indeks 114 surah dari equran.id (tervalidasi total 6.236 ayat) |
 
@@ -286,6 +289,81 @@ Semua endpoint diuji pada **24 Oktober 2026** (status HTTP, CORS, bentuk JSON, e
 - **Tipografi:** Plus Jakarta Sans (UI, karya foundry Indonesia Tokotype), Fraunces (judul), Amiri Quran (teks Arab). Semuanya di-host sendiri, dan hanya subset yang dibutuhkan.
 - **Tema:** awalnya mengikuti perangkat; satu tombol (bulan/matahari) beralih terang ↔ gelap dan pilihan itu diingat. Tema dipasang sebelum cat pertama, jadi tidak ada kedipan.
 
+## Aplikasi Android (APK)
+
+Browser tidak mengizinkan situs memutar audio sendiri saat ditutup. Karena itu iMuslim juga tersedia sebagai **aplikasi Android sungguhan** (bukan PWA). Kodenya sama dengan versi web, dibungkus [Capacitor](https://capacitorjs.com) 8, ditambah modul native kecil untuk adzan.
+
+| | Versi web / PWA | Aplikasi Android |
+|---|---|---|
+| iMuslim ditutup / HP terkunci | Notifikasi push dengan suara notifikasi; adzan diputar setelah diketuk | **Adzan penuh berbunyi sendiri** + notifikasi dengan tombol **Hentikan adzan** |
+| Butuh server | Ya (Vercel + Upstash) | Tidak, alarm dipasang di perangkat |
+| Mode senyap/getar HP | Mengikuti pengaturan notifikasi | Normal → adzan (volume alarm), getar → hanya getar, senyap/menelepon → hanya notifikasi |
+
+```mermaid
+flowchart LR
+  W["Jadwal Sholat: adzan dinyalakan"] -->|jadwal myQuran bulan ini & depan| P[Plugin AdzanAlarm]
+  P --> S[(Penyimpanan perangkat)]
+  P -->|setAlarmClock: waktu berikutnya| A[AlarmManager]
+  A -->|tepat di menitnya| R[AdzanReceiver]
+  R -->|pasang alarm berikutnya| A
+  R --> F["AdzanService (layanan latar depan)"]
+  F --> Au["Adzan diputar + notifikasi Hentikan"]
+  F -->|jadwal tinggal < 7 hari| M[api.myquran.com]
+  B["HP dinyalakan ulang / aplikasi diperbarui / jam diubah"] --> R
+```
+
+- **Kode native:** `android/app/src/main/java/io/github/syamaydev/imuslim/adzan/`:
+  - `AdzanAlarmPlugin`: jembatan ke JavaScript;
+  - `AdzanScheduler`: satu alarm berantai via `setAlarmClock`, yang tidak ditunda Doze maupun kuota App Standby;
+  - `AdzanReceiver`: alarm, restart, update, dan perubahan jam;
+  - `AdzanService`: `MediaPlayer` dengan volume alarm dan *audio focus*, sehingga berhenti bila ada panggilan;
+  - `ScheduleRefresher`: mengambil jadwal bulan berikutnya dari myQuran dengan validasi yang sama dengan `mapSchedule`.
+- **Sisi web:** `src/native/NativeBridge.jsx`, `src/features/sholat/NativeAdzanSettings.jsx`, dan `nativeEvents.js`. Konstanta build `__NATIVE__` bernilai `false` di build web, jadi kode ini tidak ikut ke GitHub Pages/Vercel. Di aplikasi, adzan diputar alarm native (juga saat aplikasi terbuka), sehingga tidak pernah dobel.
+- **Audio:** berkas yang sama (`public/audio/*.mp3`) diputar langsung dari aset APK. Subuh memakai adzan Subuh, dan imsak memakai pengumuman imsak.
+- **Jadwal tetap berjalan** walau aplikasi lama tidak dibuka:
+  - layanan adzan memperbarui sendiri dari myQuran bila jadwal tersimpan tinggal kurang dari 7 hari;
+  - bila gagal dan tinggal 2 hari atau kurang, muncul notifikasi untuk membuka iMuslim.
+- **Izin:**
+  - notifikasi (Android 13+), diminta saat adzan dinyalakan;
+  - alarm tepat waktu;
+  - mulai saat HP dinyalakan;
+  - layanan latar depan dan getar;
+  - pengecualian penghemat baterai, lewat tombol;
+  - lokasi, hanya saat tombol lokasi ditekan.
+
+  Halaman Jadwal Sholat menampilkan status tiap izin beserta tombol **Uji adzan (10 detik lagi)**.
+
+### Membuat & merilis APK
+
+Prasyarat: Android Studio, yang menyediakan JBR/JDK 21 dan SDK. Butuh platform `android-36`.
+
+```bash
+npm run android:build -- --new-keystore   # rilis pertama saja: membuat kunci tanda tangan
+npm run android:build                      # rilis berikutnya (naikkan "version" di package.json dulu)
+npm run android:debug                      # APK debug untuk pengujian
+```
+
+Skrip `scripts/android-build.mjs` menjalankan langkah berikut:
+1. Build web dengan `CAP_BUILD=1` ke folder terpisah: base `/`, service worker mati, kode native aktif.
+2. Salin beranda dan aset ke `dist-native/`, lalu jalankan `cap sync`.
+3. Kompilasi dengan Gradle `assembleRelease`.
+4. Verifikasi tanda tangan dengan `apksigner`.
+5. Tulis `public/download/imuslim.apk` dan `public/download/android.json` (versi, ukuran, SHA-256, sidik jari sertifikat).
+
+Commit kedua berkas itu lalu push. GitHub Pages & Vercel ikut menyajikannya. Pengaturan menampilkan tombol **Unduh APK**, dan aplikasi yang terpasang memeriksa `android.json` untuk memberi tahu versi baru. `versionName`/`versionCode` mengikuti `package.json` (2.1.0 → 20100).
+
+> **Cadangkan folder `~/.imuslim/android/`** (kunci `.jks` dan kata sandinya). Folder ini sengaja di luar repo. Tanpa kunci yang sama, versi baru tidak bisa dipasang di atas versi lama: pengguna harus menghapus aplikasi dulu, dan datanya ikut hilang.
+
+**Pengujian:**
+- `npm test` mencakup `nativeEvents.test.js`.
+- `cd android && gradlew test` menguji pembacaan jadwal & rantai alarm di Java dengan data myQuran yang sama.
+
+**Batasan:**
+- Belum ada aplikasi iPhone, karena membutuhkan Mac dan akun Apple Developer. iPhone tetap memakai PWA + Web Push.
+- APK dipasang di luar Play Store. Android meminta izin "instal aplikasi tidak dikenal", dan Play Protect bisa memberi peringatan.
+- Beberapa merek HP (Xiaomi, Oppo, Vivo, realme, Infinix, Samsung) mematikan aplikasi latar secara agresif; panduannya ada di aplikasi. *Paksa berhenti* menghapus semua alarm sampai iMuslim dibuka lagi (perilaku Android).
+- Setelah HP dinyalakan ulang, alarm terpasang kembali begitu layar dibuka kuncinya pertama kali.
+
 ## Notifikasi saat iMuslim ditutup (Web Push)
 
 Browser tidak mengizinkan situs, termasuk PWA yang dipasang, memutar audio sendiri saat ditutup. Karena itu pengingat berjalan dalam dua mode:
@@ -310,6 +388,11 @@ flowchart LR
 ```
 
 - **Kode:** `api/` (Vercel Functions) dan klien di `src/features/sholat/push.js`, `usePushSync.js`, `PrayerAlarm.jsx`, serta handler `push`/`notificationclick` di `public/sw.js`.
+- **Memperbaiki diri:**
+  - langganan dikirim ulang ke server paling lambat tiap 6 jam saat iMuslim dibuka;
+  - sekali per sesi, aplikasi menanyakan `api/push/status` apakah langganannya masih tersimpan, lalu mendaftar ulang bila hilang;
+  - layanan push kadang menolak langganan yang baru berumur beberapa detik ("gone"). Notifikasi uji mencobanya ulang dan **tidak lagi menghapus langganan**. Penghapusan diam-diam inilah penyebab notifikasi terjadwal tidak pernah datang di versi sebelumnya;
+  - server mencatat hasil pengiriman terakhir per perangkat, dan halaman Jadwal Sholat menampilkannya ("Notifikasi terakhir: Ashar … terkirim").
 - **Data jadwal** di server sama dengan aplikasi (myQuran + `mapSchedule`). Setiap pesan "fire" juga menjadwalkan ulang hari ini & besok, sehingga rantainya tetap jalan walau cron harian terlewat.
 - **Keamanan:**
   - endpoint `fire` hanya menerima permintaan bertanda tangan QStash;
@@ -337,6 +420,7 @@ Versi GitHub Pages memakai API yang sama (lintas-origin ke domain Vercel).
 - Bunyi saat ditutup adalah suara notifikasi perangkat. Adzan penuh baru diputar setelah notifikasi diketuk; bila browser memblokir pemutaran otomatis, iMuslim menampilkan tombol **Putar adzan**.
 - Penghemat baterai HP yang agresif bisa menunda notifikasi.
 - Setiap kota yang punya pelanggan memakai ±5–6 pesan QStash per hari, jadi perhatikan kuota harian paket gratis Upstash.
+- Untuk adzan yang berbunyi sendiri di Android, gunakan [aplikasi Android](#aplikasi-android-apk).
 
 ## Kualitas: aksesibilitas, tes, Lighthouse
 
@@ -395,7 +479,8 @@ Cara render ulang, daftar aset beserta lisensinya, dan hasil ukur ada di [`motio
 - Lokasi hanya diminta saat tombol ditekan:
   - untuk jadwal sholat, koordinat dikirim ke Nominatim hanya untuk mengetahui nama kota dan tidak disimpan;
   - untuk kiblat, koordinat disimpan di perangkat agar tidak perlu diminta ulang.
-- Satu-satunya data di server: bila **Notifikasi walau iMuslim ditutup** dinyalakan, server (Vercel + Upstash Redis) menyimpan alamat langganan push browser, ID kota, dan pilihan adzan/imsak. Data itu dipakai hanya untuk mengirim pengingat, dan dihapus saat notifikasi dimatikan atau langganannya kedaluwarsa.
+- Aplikasi Android tidak mengirim data ke server iMuslim. Jadwal diambil langsung dari myQuran, lalu alarm adzan disimpan di perangkat.
+- Satu-satunya data di server: bila **Notifikasi walau iMuslim ditutup** (versi web) dinyalakan, server (Vercel + Upstash Redis) menyimpan alamat langganan push browser, ID kota, dan pilihan adzan/imsak. Data itu dipakai hanya untuk mengirim pengingat, dan dihapus saat notifikasi dimatikan atau langganannya kedaluwarsa.
 
 ## Migrasi dari versi lama
 
@@ -413,7 +498,7 @@ Detail lengkap: [`docs/AUDIT.md`](docs/AUDIT.md).
 
 ## Batasan yang diketahui
 
-- Pengingat adzan & notifikasi hanya berjalan selama iMuslim terbuka (belum ada server push).
+- Versi web tidak bisa memutar adzan sendiri saat ditutup; yang berbunyi adalah suara notifikasi dari Web Push. Aplikasi Android memutar adzan penuh. iPhone hanya mendapat versi web (lihat [Aplikasi Android](#aplikasi-android-apk)).
 - Tanggal Hijriah adalah hasil perhitungan. Penetapan resmi Indonesia (sidang isbat) bisa berbeda ±1 hari; gunakan penyesuaian di Pengaturan.
 - Kompas memerlukan magnetometer; di laptop/desktop, gunakan sudut kiblat bersama kompas fisik.
 - Konten bergantung pada API pihak ketiga. Bila sumber berubah atau mati, iMuslim menampilkan error/penanda usang, bukan data pengganti.

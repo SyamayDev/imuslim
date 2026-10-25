@@ -1,0 +1,17 @@
+{
+  "appId": "io.github.syamaydev.imuslim",
+  "appName": "iMuslim",
+  "webDir": "dist-native",
+  "backgroundColor": "#F6F2E9",
+  "appendUserAgent": "iMuslim-Android",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": false
+  },
+  "plugins": {
+    "SystemBars": {
+      "insetsHandling": "native",
+      "initialViewportFitValueHint": "cover"
+    }
+  }
+}

@@ -5,11 +5,12 @@ import { readiness } from '../_lib/env.js';
 import { handle, HttpError, json } from '../_lib/http.js';
 import { verifySignature } from '../_lib/qstash.js';
 import { payloadFor, planCity } from '../_lib/schedule.js';
-import { citySubscriptions, removeById } from '../_lib/subs.js';
+import { citySubscriptions, recordDeliveries, removeById } from '../_lib/subs.js';
 import { sendMany } from '../_lib/webpush.js';
 
 export const maxDuration = 60;
 const LATE = 10 * 60 * 1000;
+const GRACE = 15 * 60 * 1000;
 const KEYS = ['imsak', 'subuh', 'dzuhur', 'ashar', 'maghrib', 'isya'];
 
 export const POST = handle(async (request) => {
@@ -27,7 +28,9 @@ export const POST = handle(async (request) => {
     const payload = payloadFor(ev);
     const results = await sendMany(subs, () => payload);
     sent = results.filter((r) => r === 'ok').length;
-    const dead = subs.filter((_, i) => results[i] === 'gone');
+    await recordDeliveries(subs, results, ev);
+    // Langganan yang sangat baru bisa ditolak sesaat; hanya hapus yang sudah cukup lama.
+    const dead = subs.filter((s, i) => results[i] === 'gone' && Date.now() - (s.createdAt ?? 0) > GRACE);
     gone = dead.length;
     await Promise.all(dead.map((s) => removeById(s.id, s.cityId)));
   }

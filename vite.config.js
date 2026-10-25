@@ -16,9 +16,13 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       __SITE_URL__: JSON.stringify(site.url),
       __REPO_URL__: JSON.stringify(REPO_URL),
       __PUSH_API__: JSON.stringify(site.pushApi),
+      // true hanya pada build aplikasi Android (Capacitor); kode native tersingkir dari build web.
+      __NATIVE__: JSON.stringify(site.native),
     },
     build: {
       target: 'es2020',
+      // OUT_DIR: build aplikasi Android ditaruh terpisah (scripts/android-build.mjs).
+      outDir: process.env.OUT_DIR || 'dist',
       // Manifest dipakai scripts/postbuild.mjs untuk preload modul per route.
       manifest: !isSsrBuild,
       // Satu stylesheet untuk seluruh aplikasi: di-inline ke setiap halaman prerender

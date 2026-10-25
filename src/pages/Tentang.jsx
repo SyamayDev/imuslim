@@ -84,7 +84,8 @@ export default function Tentang() {
         </div>
         <p>
           iMuslim adalah aplikasi web ringan untuk ibadah harian: membaca Al-Qur'an dengan audio dan tafsir, melihat jadwal sholat dan imsakiyah, membaca doa dan hadits, memantau
-          kalender Hijriah, menentukan arah kiblat, dan menghitung zakat. Tanpa akun, tanpa iklan, tanpa pelacak.
+          kalender Hijriah, menentukan arah kiblat, dan menghitung zakat. Tersedia juga sebagai aplikasi Android yang memutar adzan walau ditutup. Tanpa akun, tanpa iklan, tanpa
+          pelacak.
         </p>
         <p className="about-hero__logo-note">
           Logo: lengkung mihrab sebagai ruang ibadah, bulan sabit sebagai titik huruf “i”, dan buku terbuka sebagai ilmu — dirancang khusus untuk iMuslim.
@@ -158,8 +159,11 @@ export default function Tentang() {
             disimpan di perangkat agar tidak perlu meminta ulang. Tidak ada analitik atau cookie pelacak.
           </p>
           <p className="muted">
-            Bila Anda menyalakan “Notifikasi walau iMuslim ditutup”, server iMuslim (Vercel) menyimpan alamat langganan notifikasi browser Anda beserta ID kota dan pilihan
-            adzan/imsak—hanya untuk mengirim pengingat tepat waktu. Tidak ada nama, lokasi, atau data lain. Data itu dihapus saat notifikasinya dimatikan.
+            Bila Anda menyalakan “Notifikasi walau iMuslim ditutup” di versi web, server iMuslim (Vercel) menyimpan alamat langganan notifikasi browser Anda beserta ID kota dan
+            pilihan adzan/imsak—hanya untuk mengirim pengingat tepat waktu. Tidak ada nama, lokasi, atau data lain. Data itu dihapus saat notifikasinya dimatikan.
+          </p>
+          <p className="muted">
+            Aplikasi Android tidak mengirim data ke server iMuslim: jadwal diambil langsung dari myQuran dan alarm adzan disimpan di perangkat Anda.
           </p>
         </article>
       </section>

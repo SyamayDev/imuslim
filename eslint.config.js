@@ -5,7 +5,7 @@ import reactRefresh from 'eslint-plugin-react-refresh';
 
 export default [
   {
-    ignores: ['dist/**', 'legacy/**', 'motion/**', 'node_modules/**', 'coverage/**', 'playwright-report/**', 'test-results/**', 'reports/**'],
+    ignores: ['dist/**', 'dist-native/**', 'dist-native-full/**', 'android/**', 'legacy/**', 'motion/**', 'node_modules/**', 'coverage/**', 'playwright-report/**', 'test-results/**', 'reports/**'],
   },
   js.configs.recommended,
   {
@@ -13,7 +13,7 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: { ...globals.browser, __APP_VERSION__: 'readonly', __BUILD_DATE__: 'readonly', __SITE_URL__: 'readonly', __REPO_URL__: 'readonly', __PUSH_API__: 'readonly' },
+      globals: { ...globals.browser, __APP_VERSION__: 'readonly', __BUILD_DATE__: 'readonly', __SITE_URL__: 'readonly', __REPO_URL__: 'readonly', __PUSH_API__: 'readonly', __NATIVE__: 'readonly' },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     plugins: {

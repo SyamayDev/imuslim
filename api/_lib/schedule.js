@@ -75,17 +75,28 @@ export async function planCity(cityId, now = Date.now(), { fetchImpl = fetch, c 
     c,
   );
   const fresh = events.filter((_, i) => flags[i] === 'OK');
+  const flagKey = (e) => `push:sched:${cityId}:${e.date}:${e.key}`;
   const url = `${c.publicBase.replace(/\/+$/, '')}/api/push/fire/`;
-  await publishBatch(
-    fresh.map((e) => ({
-      url,
-      notBefore: Math.floor(e.at / 1000),
-      dedupId: `imuslim-${cityId}-${e.date}-${e.key}`,
-      body: { cityId, date: e.date, key: e.key, time: e.time, at: e.at, tz: e.tz, city: e.city },
-    })),
-    c,
-  );
-  return { cityId, planned: fresh.length };
+  let results;
+  try {
+    results = await publishBatch(
+      fresh.map((e) => ({
+        url,
+        notBefore: Math.floor(e.at / 1000),
+        dedupId: `imuslim-${cityId}-${e.date}-${e.key}`,
+        body: { cityId, date: e.date, key: e.key, time: e.time, at: e.at, tz: e.tz, city: e.city },
+      })),
+      c,
+    );
+  } catch (error) {
+    // Lepas penanda agar percobaan berikutnya (cron/fire/langganan) menjadwalkan ulang.
+    if (fresh.length) await redis(fresh.map((e) => ['DEL', flagKey(e)]), c).catch(() => {});
+    throw error;
+  }
+  // QStash bisa menolak sebagian pesan dalam satu batch.
+  const failed = fresh.filter((_, i) => Array.isArray(results) && results[i]?.error);
+  if (failed.length) await redis(failed.map((e) => ['DEL', flagKey(e)]), c);
+  return { cityId, planned: fresh.length - failed.length };
 }
 
 function ym(iso) {

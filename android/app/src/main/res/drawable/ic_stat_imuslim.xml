@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ikon notifikasi: siluet putih logo iMuslim (mihrab, bulan sabit, buku terbuka). -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="64"
+    android:viewportHeight="64">
+    <path
+        android:pathData="M18.5,44.4V29.5C18.5,20.8 24.6,14.6 32,9.2C39.4,14.6 45.5,20.8 45.5,29.5V44.4"
+        android:strokeWidth="4.4"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M32.564,18.534A4.7,4.7 0,1 0,36.322 25.048A3.76,3.76 0,0 1,32.564 18.534Z" />
+    <path
+        android:pathData="M32,31.6V43.2"
+        android:strokeWidth="4.6"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round" />
+    <path
+        android:pathData="M12.5,47.2C19.2,43.6 25.8,43.8 32,47.8C38.2,43.8 44.8,43.6 51.5,47.2"
+        android:strokeWidth="4.2"
+        android:strokeColor="#FFFFFFFF"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

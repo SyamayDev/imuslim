@@ -319,3 +319,42 @@
   display: grid;
   gap: 4px;
 }
+
+/* Aplikasi Android: daftar kesiapan adzan (izin notifikasi, alarm tepat waktu, baterai) */
+.native-checks {
+  list-style: none;
+  margin: 0 0 14px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+.native-check {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  font-size: var(--fs-sm);
+  line-height: 1.45;
+}
+.native-check > svg {
+  flex: none;
+  width: 20px;
+  height: 20px;
+}
+.native-check.is-ok > svg {
+  color: var(--success);
+}
+.native-check.is-todo {
+  border-color: var(--gold-line);
+  background: var(--warn-soft);
+}
+.native-check.is-todo > svg {
+  color: var(--warn);
+}
+.native-check__text {
+  flex: 1 1 200px;
+  display: grid;
+}

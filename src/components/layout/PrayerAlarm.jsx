@@ -7,6 +7,7 @@ import { ADZAN_AUDIO } from '../../features/sholat/adzan.js';
 import { pushWant, usePushStatus, usePushSync } from '../../features/sholat/usePushSync.js';
 import { useTodayPrayer } from '../../features/sholat/usePrayerTimes.js';
 import { useNow } from '../../hooks/useNow.js';
+import { nativeApi, useNativeState } from '../../native/state.js';
 import { useStore } from '../../utils/storage.js';
 import { getPrayerStatus, OBLIGATORY, PRAYER_LABELS, TIMEZONES } from '../../utils/prayer.js';
 
@@ -51,6 +52,8 @@ function markFired(id) {
  * - Saat iMuslim terbuka: memutar adzan tepat waktu (hanya bila dinyalakan pengguna).
  * - Saat ditutup: server mengirim notifikasi push; mengetuknya membuka iMuslim dengan
  *   ?adzan=…&at=… (atau pesan dari service worker bila sudah terbuka) → adzan diputar di sini.
+ * - Aplikasi Android: adzan diputar oleh alarm native (juga saat aplikasi terbuka), jadi
+ *   halaman hanya menampilkan banner + tombol "Hentikan adzan".
  * Tidak ada audio yang diputar saat startup tanpa permintaan.
  */
 export function PrayerAlarm() {
@@ -64,6 +67,7 @@ export function PrayerAlarm() {
   const audioState = useAudioState();
   const [dismissed, setDismissed] = useState(null);
   const requested = useSyncExternalStore(subscribeRequest, () => request, () => null);
+  const native = useNativeState();
   const playedRef = useRef(new Set());
   const location = useLocation();
   const navigate = useNavigate();
@@ -129,6 +133,7 @@ export function PrayerAlarm() {
   const pushActive = Boolean(pushWant(prefs)) && pushStatus.state === 'active';
 
   useEffect(() => {
+    if (__NATIVE__) return; // alarm native yang memutar adzan
     if (!alert || !fresh || playedRef.current.has(alert.id) || wasFired(alert.id)) return;
     // Sudah diputar karena notifikasinya diketuk? Jangan diulang.
     if (requested && requested.key === alert.key && Math.abs(requested.at - alert.at) < 60000) return;
@@ -150,7 +155,9 @@ export function PrayerAlarm() {
   }, [alert, fresh, requested, play, pushActive, prefs.adzanNotify, prefs.cityName, schedule.tz]);
 
   const isAdzan = audioState.queue?.kind === 'adzan' && !audioState.queue.id.startsWith('preview');
-  const isPlaying = isAdzan && audioState.status === 'playing';
+  const nativePlaying = __NATIVE__ && Boolean(native.status?.playing);
+  const isPlaying = (isAdzan && audioState.status === 'playing') || nativePlaying;
+  const stopAdzan = nativePlaying ? () => nativeApi()?.stop() : audio.stop;
   const blocked = isAdzan && audioState.status === 'paused' && Boolean(audioState.error);
 
   // Banner dari notifikasi yang diketuk (prioritas), lalu banner jadwal biasa.
@@ -170,7 +177,7 @@ export function PrayerAlarm() {
           </button>
         )}
         {isPlaying && (
-          <button type="button" className="btn btn--sm" onClick={audio.stop}>
+          <button type="button" className="btn btn--sm" onClick={stopAdzan}>
             Hentikan adzan
           </button>
         )}
@@ -196,7 +203,7 @@ export function PrayerAlarm() {
         </button>
       )}
       {isPlaying && (
-        <button type="button" className="btn btn--sm" onClick={audio.stop}>
+        <button type="button" className="btn btn--sm" onClick={stopAdzan}>
           Hentikan adzan
         </button>
       )}

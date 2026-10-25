@@ -1,7 +1,7 @@
 {
   "name": "imuslim",
   "private": true,
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "iMuslim — aplikasi web Islami: Al-Qur'an, jadwal sholat, doa, hadits, kalender Hijriah, arah kiblat, dan kalkulator zakat.",
   "type": "module",
   "homepage": "https://syamaydev.github.io/imuslim/",
@@ -22,9 +22,14 @@
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "lighthouse": "node scripts/lighthouse.mjs",
-    "brand": "node scripts/generate-brand.mjs"
+    "brand": "node scripts/generate-brand.mjs",
+    "android:build": "node scripts/android-build.mjs",
+    "android:debug": "node scripts/android-build.mjs --debug"
   },
   "dependencies": {
+    "@capacitor/android": "8.5.3",
+    "@capacitor/app": "8.1.2",
+    "@capacitor/core": "8.5.3",
     "@fontsource-variable/plus-jakarta-sans": "^5.3.0",
     "@fontsource/amiri-quran": "^5.3.0",
     "@fontsource/fraunces": "^5.3.0",
@@ -35,6 +40,7 @@
     "web-push": "3.6.7"
   },
   "devDependencies": {
+    "@capacitor/cli": "8.5.3",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
     "@testing-library/jest-dom": "^7.0.1",

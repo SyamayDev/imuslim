@@ -9,13 +9,14 @@ import { DataNotice, EmptyState, ErrorState, LoadingBlock } from '../components/
 import { SwitchRow } from '../components/ui/Switch.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { CityPicker } from '../features/sholat/CityPicker.jsx';
+import { NativeAdzanSettings } from '../features/sholat/NativeAdzanSettings.jsx';
 import { isIosBrowserTab, pushSupported, sendTestPush } from '../features/sholat/push.js';
 import { pushWant, runPushSync, usePushStatus } from '../features/sholat/usePushSync.js';
 import { useMonthSchedule, useTodayPrayer } from '../features/sholat/usePrayerTimes.js';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 import { useClientValue } from '../hooks/useHydrated.js';
 import { useNow } from '../hooks/useNow.js';
-import { DAY_NAMES, formatLongDate, MONTH_NAMES } from '../utils/format.js';
+import { DAY_NAMES, formatLongDate, formatShortDate, MONTH_NAMES } from '../utils/format.js';
 import { formatHijri, toHijri } from '../utils/hijri.js';
 import { timezoneForCity, deviceMatchesTz, describeCountdown, formatCountdown, getPrayerStatus, ORDER, PRAYER_LABELS, TIMEZONES, wallClock } from '../utils/prayer.js';
 import { useStore } from '../utils/storage.js';
@@ -71,7 +72,7 @@ export default function Sholat() {
         </>
       )}
 
-      <AdzanSettings prefs={prefs} />
+      {__NATIVE__ ? <NativeAdzanSettings prefs={prefs} /> : <AdzanSettings prefs={prefs} />}
 
       <SourceNote>
         Sumber jadwal: <a href="https://api.myquran.com" target="_blank" rel="noopener noreferrer">api.myquran.com</a>. iMuslim tidak menghitung waktu sholat sendiri; bila
@@ -252,6 +253,12 @@ const notificationsSupported = () => 'Notification' in window;
 const iosTab = () => isIosBrowserTab();
 
 /** Teks status notifikasi saat iMuslim ditutup (jujur soal apa yang sedang terjadi). */
+function lastDeliveryText(last) {
+  if (!last?.key || !last.date) return '';
+  const what = `${PRAYER_LABELS[last.key] ?? last.key} ${formatShortDate(last.date)} pukul ${String(last.time ?? '').replace(':', '.')}`;
+  return last.result === 'ok' ? ` Notifikasi terakhir: ${what} — terkirim.` : ` Notifikasi terakhir (${what}) gagal dikirim ke perangkat ini.`;
+}
+
 function pushStatusText(status, { prefs, supported, ios }) {
   if (!prefs.adzanNotify) return null;
   if (ios) return { tone: 'warn', text: 'Di iPhone/iPad, pasang iMuslim ke Layar Utama dulu (Bagikan → Tambah ke Layar Utama), lalu nyalakan dari aplikasi itu.' };
@@ -259,7 +266,7 @@ function pushStatusText(status, { prefs, supported, ios }) {
   if (!prefs.adzanEnabled && !prefs.imsakAlert) return { tone: 'warn', text: 'Nyalakan adzan atau imsak di atas agar ada pengingat yang dikirim.' };
   switch (status.state) {
     case 'active':
-      return { tone: 'ok', text: `Aktif untuk ${prefs.cityName}. Server iMuslim mengirim notifikasi tepat waktu walau aplikasi ditutup.` };
+      return { tone: 'ok', text: `Aktif untuk ${prefs.cityName}. Server iMuslim mengirim notifikasi tepat waktu walau aplikasi ditutup.${lastDeliveryText(status.last)}` };
     case 'syncing':
     case 'idle':
       return { tone: 'muted', text: 'Menyambungkan ke server notifikasi…' };
@@ -320,7 +327,9 @@ function AdzanSettings({ prefs }) {
       await sendTestPush();
       toast.show('Notifikasi uji dikirim. Coba juga dengan iMuslim ditutup.');
     } catch (error) {
-      toast.show(error.message || 'Notifikasi uji gagal dikirim.', { type: 'error', duration: 4500 });
+      toast.show(error.message || 'Notifikasi uji gagal dikirim.', { type: 'error', duration: 6000 });
+      // Ditolak layanan push → buat langganan baru agar notifikasi terjadwal tetap sampai.
+      if (error.code === 'gone') await runPushSync(pushWant(prefs), { renew: true });
     } finally {
       setTesting(false);
     }

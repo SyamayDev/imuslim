@@ -2,6 +2,9 @@
 node_modules/
 dist/
 dist-ssr/
+# Aplikasi Android: aset web hasil build (disalin ke android/ oleh Capacitor)
+dist-native/
+dist-native-full/
 coverage/
 
 # Laporan pengujian

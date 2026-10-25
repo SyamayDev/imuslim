@@ -83,10 +83,10 @@ describe('lazyPage', () => {
 describe('konfigurasi situs (GitHub Pages / Vercel)', () => {
   it('bawaan: GitHub Pages di /imuslim/', () => {
     // GitHub Pages memanggil API push di domain Vercel (lintas-origin)
-    expect(resolveSite({})).toEqual({ base: '/imuslim/', url: 'https://syamaydev.github.io/imuslim', onVercel: false, pushApi: 'https://imuslim-seven.vercel.app/api' });
+    expect(resolveSite({})).toEqual({ base: '/imuslim/', url: 'https://syamaydev.github.io/imuslim', onVercel: false, pushApi: 'https://imuslim-seven.vercel.app/api', native: false });
   });
   it('Vercel: base "/" dan URL domain produksi', () => {
-    expect(resolveSite({ VERCEL: '1', VERCEL_PROJECT_PRODUCTION_URL: 'imuslim.vercel.app' })).toEqual({ base: '/', url: 'https://imuslim.vercel.app', onVercel: true, pushApi: '/api' });
+    expect(resolveSite({ VERCEL: '1', VERCEL_PROJECT_PRODUCTION_URL: 'imuslim.vercel.app' })).toEqual({ base: '/', url: 'https://imuslim.vercel.app', onVercel: true, pushApi: '/api', native: false });
   });
   it('BASE_PATH & SITE_URL menimpa keduanya', () => {
     expect(resolveSite({ VERCEL: '1', BASE_PATH: 'app', SITE_URL: 'https://contoh.id/app/', PUSH_API_URL: 'https://api.contoh.id/api/' })).toEqual({
@@ -94,6 +94,10 @@ describe('konfigurasi situs (GitHub Pages / Vercel)', () => {
       url: 'https://contoh.id/app',
       onVercel: true,
       pushApi: 'https://api.contoh.id/api',
+      native: false,
     });
+  });
+  it('aplikasi Android (CAP_BUILD=1): base "/", tautan ke situs Vercel, API push absolut', () => {
+    expect(resolveSite({ CAP_BUILD: '1', VERCEL: '1' })).toEqual({ base: '/', url: 'https://imuslim-seven.vercel.app', onVercel: false, pushApi: 'https://imuslim-seven.vercel.app/api', native: true });
   });
 });

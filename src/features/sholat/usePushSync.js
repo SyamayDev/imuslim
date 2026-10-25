@@ -1,7 +1,7 @@
 // Menjaga langganan push di server selalu sesuai pilihan pengguna (kota, adzan, imsak),
 // plus status bersama untuk UI. Dipasang sekali di AppShell (lewat PrayerAlarm).
 import { useEffect, useSyncExternalStore } from 'react';
-import { syncPush } from './push.js';
+import { checkPushStatus, syncPush } from './push.js';
 
 let status = { state: 'idle' };
 const listeners = new Set();
@@ -42,13 +42,33 @@ export async function runPushSync(want, opts) {
   }
 }
 
+let verified = false;
+/**
+ * Sekali per sesi: tanyakan ke server apakah langganan ini masih tersimpan. Bila hilang
+ * (mis. dihapus karena ditolak layanan push), daftarkan ulang tanpa menunggu 6 jam.
+ */
+export async function verifyPush(want) {
+  if (!want || verified) return;
+  verified = true;
+  const s = await checkPushStatus();
+  if (!s) return;
+  if (!s.subscribed) {
+    await runPushSync(want, { force: true });
+    return;
+  }
+  if (status.state === 'active') setPushStatus({ ...status, last: s.last ?? null });
+}
+
 export function usePushSync(prefs) {
   const want = pushWant(prefs);
   const key = want ? `${want.cityId}|${want.adzan}|${want.imsak}` : 'off';
   useEffect(() => {
-    if (!import.meta.env.PROD) return undefined; // service worker hanya ada di build produksi
-    const t = setTimeout(() => {
-      runPushSync(key === 'off' ? null : { cityId: key.split('|')[0], adzan: key.split('|')[1] === 'true', imsak: key.split('|')[2] === 'true' });
+    // Service worker hanya ada di build produksi web; aplikasi Android memakai alarm native.
+    if (!import.meta.env.PROD || __NATIVE__) return undefined;
+    const t = setTimeout(async () => {
+      const want = key === 'off' ? null : { cityId: key.split('|')[0], adzan: key.split('|')[1] === 'true', imsak: key.split('|')[2] === 'true' };
+      const r = await runPushSync(want);
+      if (r.state === 'active') verifyPush(want);
     }, 1200);
     return () => clearTimeout(t);
   }, [key]);

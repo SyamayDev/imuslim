@@ -1,5 +1,5 @@
 import { LayoutGrid } from 'lucide-react';
-import { Suspense, useEffect, useState } from 'react';
+import { lazy, Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { NAV, NAV_GROUPS, BOTTOM_NAV, titleForPath } from '../../app/nav.js';
 import { prefetchProps } from '../../app/pages.js';
@@ -13,6 +13,9 @@ import { Footer } from './Footer.jsx';
 import { ErrorBoundary } from './ErrorBoundary.jsx';
 import { OfflineBanner } from './OfflineBanner.jsx';
 import { PrayerAlarm } from './PrayerAlarm.jsx';
+
+// Jembatan alarm adzan native — hanya ikut di build aplikasi Android.
+const NativeBridge = __NATIVE__ ? lazy(() => import('../../native/NativeBridge.jsx')) : null;
 
 function Sidebar() {
   return (
@@ -146,6 +149,11 @@ export function AppShell() {
         <Topbar />
         <OfflineBanner />
         <PrayerAlarm />
+        {NativeBridge && (
+          <Suspense fallback={null}>
+            <NativeBridge />
+          </Suspense>
+        )}
         <main id="konten" className="app__main" tabIndex={-1}>
           <ErrorBoundary resetKey={pathname}>
             <Suspense fallback={<PageFallback />}>

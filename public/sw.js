@@ -46,6 +46,8 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || !url.pathname.startsWith(SCOPE)) return;
   if (url.pathname.endsWith('.mp3') || request.headers.has('range')) return;
+  // Berkas unduhan (APK Android & info versinya) selalu langsung dari jaringan, tidak di-cache.
+  if (url.pathname.startsWith(`${SCOPE}download/`)) return;
 
   if (request.mode === 'navigate') {
     // Setiap halaman diprerender, jadi HTML disimpan per URL (maks. PAGE_LIMIT terakhir).

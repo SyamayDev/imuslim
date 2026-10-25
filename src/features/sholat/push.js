@@ -8,6 +8,9 @@
 import { PUSH_API } from '../../app/site.js';
 
 const SYNC_KEY = 'imuslim:push-sync';
+// Langganan dikirim ulang ke server paling lambat tiap 6 jam saat iMuslim dibuka (idempoten),
+// sehingga langganan yang hilang di server pulih sendiri.
+const RESYNC_MS = 6 * 3600000;
 
 export function pushSupported() {
   return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window && 'Notification' in window;
@@ -118,7 +121,8 @@ export function lastSync() {
 /**
  * Sinkronkan langganan server dengan pilihan pengguna.
  * want = { cityId, adzan, imsak } (aktif) atau null (matikan).
- * Mengirim ulang ke server bila pilihan berubah atau sudah lebih dari 3 hari.
+ * Mengirim ulang ke server bila pilihan berubah atau sudah lebih dari 6 jam.
+ * opts.renew = buang langganan browser lama dan buat yang baru (bila layanan push menolaknya).
  */
 // Semua sinkronisasi dijalankan berurutan: tombol pengaturan & sinkron otomatis tidak boleh
 // berlangganan bersamaan (bisa menghasilkan dua langganan berbeda).
@@ -129,34 +133,65 @@ export function syncPush(want, opts) {
   return run;
 }
 
-async function doSync(want, { force = false } = {}) {
+async function unsubscribeHere() {
+  const sub = await currentSubscription();
+  if (sub) {
+    await api('subscription', { method: 'DELETE', body: { endpoint: sub.endpoint } }).catch(() => {});
+    await sub.unsubscribe().catch(() => {});
+  }
+  writeSync(null);
+}
+
+async function doSync(want, { force = false, renew = false } = {}) {
   if (!pushSupported()) return { state: 'unsupported' };
   if (!want) {
-    const sub = await currentSubscription();
-    if (sub) {
-      await api('subscription', { method: 'DELETE', body: { endpoint: sub.endpoint } }).catch(() => {});
-      await sub.unsubscribe().catch(() => {});
-    }
-    writeSync(null);
+    await unsubscribeHere();
     return { state: 'off' };
   }
   if (Notification.permission !== 'granted') return { state: 'no-permission' };
   const cfg = await getPushConfig();
   if (!cfg?.enabled || !cfg.publicKey) return { state: 'server-off' };
+  if (renew) await unsubscribeHere();
   const sub = await ensureSubscription(cfg.publicKey);
   const json = sub.toJSON();
   const sig = `${json.endpoint}|${want.cityId}|${want.adzan ? 1 : 0}|${want.imsak ? 1 : 0}`;
   const prev = readSync();
-  if (!force && prev?.sig === sig && Date.now() - prev.at < 3 * 86400000) return { state: 'active', at: prev.at, cityId: want.cityId };
-  await api('subscription', { method: 'POST', body: { subscription: { endpoint: json.endpoint, keys: json.keys }, cityId: want.cityId, adzan: want.adzan, imsak: want.imsak } });
+  if (!force && !renew && prev?.sig === sig && Date.now() - prev.at < RESYNC_MS) return { state: 'active', at: prev.at, cityId: want.cityId, last: prev.last ?? null };
+  const res = await api('subscription', { method: 'POST', body: { subscription: { endpoint: json.endpoint, keys: json.keys }, cityId: want.cityId, adzan: want.adzan, imsak: want.imsak } });
   const at = Date.now();
-  writeSync({ sig, at, cityId: want.cityId });
-  return { state: 'active', at, cityId: want.cityId };
+  const last = res?.last ?? null;
+  writeSync({ sig, at, cityId: want.cityId, last });
+  return { state: 'active', at, cityId: want.cityId, last, renewed: renew };
 }
 
-/** Kirim notifikasi uji ke perangkat ini. */
+/**
+ * Periksa ke server apakah langganan perangkat ini masih tersimpan (+ hasil pengiriman terakhir).
+ * null bila perangkat belum berlangganan atau server tidak terjangkau.
+ */
+export async function checkPushStatus() {
+  const sub = await currentSubscription();
+  if (!sub) return null;
+  try {
+    return await api('status', { method: 'POST', body: { endpoint: sub.endpoint } });
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Kirim notifikasi uji ke perangkat ini. Melempar error berpesan jujur bila gagal;
+ * err.code === 'gone' berarti layanan push menolak langganan ini (perlu langganan baru).
+ */
 export async function sendTestPush() {
   const sub = await currentSubscription();
   if (!sub) throw new Error('Perangkat ini belum berlangganan notifikasi.');
-  return api('test', { method: 'POST', body: { endpoint: sub.endpoint } });
+  const r = await api('test', { method: 'POST', body: { endpoint: sub.endpoint } });
+  if (r?.ok) return r;
+  const err = new Error(
+    r?.result === 'gone'
+      ? 'Layanan notifikasi browser menolak langganan ini. iMuslim membuat langganan baru — coba kirim uji lagi sebentar lagi.'
+      : 'Server gagal mengirim notifikasi uji. Coba lagi beberapa saat lagi.',
+  );
+  err.code = r?.result ?? 'error';
+  throw err;
 }

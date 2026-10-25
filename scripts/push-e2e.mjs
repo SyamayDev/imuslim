@@ -34,6 +34,7 @@ const handlers = {
   test: await import('../api/push/test.js'),
   fire: await import('../api/push/fire.js'),
   plan: await import('../api/push/plan.js'),
+  status: await import('../api/push/status.js'),
 };
 
 /* ---------- Redis tiruan (subset perintah yang dipakai) ---------- */
@@ -202,6 +203,15 @@ try {
   const prayer = await waitNotif((n) => n.data?.type === 'prayer');
   check('notifikasi waktu sholat diterima service worker (Web Push asli)', Boolean(prayer), prayer ? `"${prayer.title}"` : `fire: ${JSON.stringify(fired)}`);
   check('notifikasi membawa URL adzan ke scope aplikasi', Boolean(prayer?.data?.url?.startsWith(`${origin}/imuslim/sholat/?adzan=`)), prayer?.data?.url);
+  const lastRaw = [...kv.entries()].find(([k]) => k.startsWith('push:last:'))?.[1];
+  const last = typeof lastRaw === 'string' ? JSON.parse(lastRaw) : null;
+  check('hasil pengiriman terjadwal tercatat untuk perangkat ini', last?.result === 'ok', last ? `${last.key} → ${last.result}` : 'tidak ada catatan');
+  const st = await page.evaluate(async (api) => {
+    const sub = await (await navigator.serviceWorker.ready).pushManager.getSubscription();
+    const r = await fetch(`${api}/push/status/`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ endpoint: sub.endpoint }) });
+    return r.json();
+  }, `http://localhost:${API_PORT}/api`);
+  check('endpoint status: langganan tersimpan + notifikasi terakhir', st.subscribed === true && st.last?.result === 'ok', JSON.stringify(st).slice(0, 120));
 
   await page.getByRole('button', { name: 'Kirim notifikasi uji' }).click();
   const test = await waitNotif((n) => n.tag === 'imuslim-test');

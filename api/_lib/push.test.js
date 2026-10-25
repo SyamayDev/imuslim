@@ -82,7 +82,9 @@ describe('jadwal → notifikasi', () => {
 describe('planCity (Redis & QStash tiruan)', () => {
   let store;
   let published;
+  let qstashDown;
   beforeEach(() => {
+    qstashDown = false;
     store = new Map();
     published = [];
     vi.stubGlobal(
@@ -100,12 +102,14 @@ describe('planCity (Redis & QStash tiruan)', () => {
                 return { result: 'OK' };
               }
               if (cmd === 'SCARD') return { result: store.get(key)?.size ?? 0 };
+              if (cmd === 'DEL') return { result: store.delete(key) ? 1 : 0 };
               return { result: null };
             }),
           );
         }
         if (u.startsWith('https://api.myquran.com/')) return Response.json(fixture);
         if (u.startsWith('https://qstash.test/v2/batch')) {
+          if (qstashDown) return new Response('down', { status: 500 });
           published.push(...JSON.parse(init.body));
           return Response.json([]);
         }
@@ -128,5 +132,14 @@ describe('planCity (Redis & QStash tiruan)', () => {
     expect(Number(ashar.headers['Upstash-Not-Before'])).toBe(Date.parse('2026-10-24T08:37:00Z') / 1000);
     const again = await planCity('0105', now + 60000, { c });
     expect(again.planned).toBe(0);
+  });
+
+  it('QStash gagal → penanda dilepas sehingga percobaan berikutnya menjadwalkan ulang', async () => {
+    const now = Date.parse('2026-10-24T08:00:00Z');
+    qstashDown = true;
+    await expect(planCity('0105', now, { c })).rejects.toThrow(/QStash HTTP 500/);
+    expect([...store.keys()].some((k) => k.startsWith('push:sched:'))).toBe(false);
+    qstashDown = false;
+    expect((await planCity('0105', now, { c })).planned).toBe(8);
   });
 });

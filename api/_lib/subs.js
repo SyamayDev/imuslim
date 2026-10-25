@@ -14,6 +14,7 @@ export const K = {
   city: (cityId) => `push:city:${cityId}`,
   cityImsak: (cityId) => `push:cityimsak:${cityId}`,
   cities: 'push:cities',
+  last: (id) => `push:last:${id}`,
 };
 
 export function subId(endpoint) {
@@ -72,7 +73,7 @@ export async function removeSubscription(endpoint) {
   const [prevRaw] = await redis([['GET', K.sub(id)]]);
   if (!prevRaw) return false;
   const prev = JSON.parse(prevRaw);
-  await redis([['DEL', K.sub(id)], ['SREM', K.city(prev.cityId), id], ['SREM', K.cityImsak(prev.cityId), id]]);
+  await redis([['DEL', K.sub(id)], ['DEL', K.last(id)], ['SREM', K.city(prev.cityId), id], ['SREM', K.cityImsak(prev.cityId), id]]);
   await dropCityIfEmpty(prev.cityId);
   return true;
 }
@@ -96,5 +97,20 @@ export async function citySubscriptions(cityId) {
 }
 
 export async function removeById(id, cityId) {
-  await redis([['DEL', K.sub(id)], ['SREM', K.city(cityId), id], ['SREM', K.cityImsak(cityId), id]]);
+  await redis([['DEL', K.sub(id)], ['DEL', K.last(id)], ['SREM', K.city(cityId), id], ['SREM', K.cityImsak(cityId), id]]);
+}
+
+/** Catat hasil pengiriman terjadwal terakhir per langganan (ditampilkan di aplikasi). */
+export async function recordDeliveries(subs, results, ev, now = Date.now()) {
+  if (!subs.length) return;
+  await redis(subs.map((s, i) => ['SET', K.last(s.id), JSON.stringify({ key: ev.key, date: ev.date, time: ev.time, at: ev.at, result: results[i], sentAt: now }), 'EX', 8 * 86400]));
+}
+
+export async function lastDelivery(id) {
+  const [raw] = await redis([['GET', K.last(id)]]);
+  try {
+    return raw ? JSON.parse(raw) : null;
+  } catch {
+    return null;
+  }
 }

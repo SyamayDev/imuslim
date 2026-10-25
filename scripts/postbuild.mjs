@@ -16,7 +16,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { resolveSite } from './site-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const dist = resolve(root, 'dist');
+const dist = resolve(root, process.env.OUT_DIR || 'dist');
 const ssrDir = resolve(root, 'dist-ssr');
 const { base: BASE_PATH, url: SITE } = resolveSite();
 const surahIndex = JSON.parse(await readFile(resolve(root, 'src/data/surah-index.json'), 'utf8'));
