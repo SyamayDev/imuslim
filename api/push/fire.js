@@ -21,8 +21,9 @@ export const POST = handle(async (request) => {
 
   let sent = 0;
   let gone = 0;
+  const all = await citySubscriptions(ev.cityId);
   if (Date.now() - ev.at <= LATE) {
-    const subs = (await citySubscriptions(ev.cityId)).filter((s) => (ev.key === 'imsak' ? s.imsak : s.adzan));
+    const subs = all.filter((s) => (ev.key === 'imsak' ? s.imsak : s.adzan));
     const payload = payloadFor(ev);
     const results = await sendMany(subs, () => payload);
     sent = results.filter((r) => r === 'ok').length;
@@ -30,8 +31,9 @@ export const POST = handle(async (request) => {
     gone = dead.length;
     await Promise.all(dead.map((s) => removeById(s.id, s.cityId)));
   }
+  // Kota tanpa pelanggan lagi tidak dijadwalkan ulang (hemat kuota QStash).
   try {
-    await planCity(ev.cityId);
+    if (all.length > gone) await planCity(ev.cityId);
   } catch (error) {
     console.error('[push] rencana lanjutan gagal', ev.cityId, error?.message);
   }
