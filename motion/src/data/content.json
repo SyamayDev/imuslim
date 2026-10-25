@@ -1,0 +1,81 @@
+{
+  "generatedAt": "2026-10-25T02:23:57.540Z",
+  "basmalah": {
+    "arab": "بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ",
+    "latin": "Bismillāhir-raḥmānir-raḥīm(i).",
+    "translation": "Dengan nama Allah Yang Maha Pengasih lagi Maha Penyayang.",
+    "ref": "QS. Al-Fātiḥah [1]: 1",
+    "source": "https://equran.id/api/v2/surat/1"
+  },
+  "prayer": {
+    "city": "Kota Jakarta",
+    "dateLabel": "Sabtu, 24 Oktober 2026",
+    "times": [
+      [
+        "Subuh",
+        "04:12"
+      ],
+      [
+        "Dzuhur",
+        "11:40"
+      ],
+      [
+        "Ashar",
+        "14:51"
+      ],
+      [
+        "Maghrib",
+        "17:49"
+      ],
+      [
+        "Isya",
+        "18:59"
+      ]
+    ],
+    "imsak": "04:02",
+    "terbit": "05:25",
+    "source": "api.myquran.com/v2/sholat/jadwal/1301/2026/10 (respons asli, direkam 24-10-2026)"
+  },
+  "qibla": {
+    "from": "Jakarta",
+    "lat": -6.2088,
+    "lon": 106.8456,
+    "kaaba": {
+      "lat": 21.422487,
+      "lon": 39.826206
+    },
+    "bearing": 295.2,
+    "distanceKm": 7920,
+    "source": "src/utils/qibla.js (rumus lingkaran besar, sama dengan aplikasi)"
+  },
+  "hijri": {
+    "gregorian": "Sabtu, 24 Oktober 2026",
+    "label": "13 Jumadilawal 1448 H",
+    "source": "src/utils/hijri.js (Umm al-Qura)"
+  },
+  "counts": {
+    "surah": 114,
+    "qari": 6,
+    "cities": 517,
+    "citiesTotal": 518,
+    "doaEquran": 227,
+    "doaMyquran": 108,
+    "hadithBooks": 9,
+    "arbain": 42,
+    "source": "README.md & docs/AUDIT.md"
+  },
+  "lighthouse": {
+    "url": "imuslim-seven.vercel.app",
+    "formFactor": "ponsel",
+    "scores": {
+      "performance": 98,
+      "accessibility": 100,
+      "bestPractices": 100,
+      "seo": 100
+    },
+    "measured": "25 Oktober 2026",
+    "tool": "Lighthouse 13.5",
+    "source": "Diukur langsung pada situs live (beranda, mode ponsel) sebelum pembuatan video"
+  },
+  "url": "imuslim-seven.vercel.app"
+}

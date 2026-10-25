@@ -1,0 +1,40 @@
+{
+  "name": "imuslim-motion",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Film motion graphic promosi iMuslim (Remotion). Terpisah dari aplikasi; tidak ikut build situs.",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio src/index.js",
+    "assets": "node scripts/sync-assets.mjs && node scripts/capture-screens.mjs && node scripts/make-textures.mjs",
+    "audio": "node scripts/audio/render-audio.mjs",
+    "stills": "node scripts/render-stills.mjs",
+    "render": "node scripts/render-all.mjs",
+    "qa": "node scripts/qa.mjs"
+  },
+  "dependencies": {
+    "@fontsource-variable/plus-jakarta-sans": "5.3.0",
+    "@fontsource/amiri-quran": "5.3.0",
+    "@fontsource/fraunces": "5.3.0",
+    "@remotion/bundler": "4.0.538",
+    "@remotion/cli": "4.0.538",
+    "@remotion/motion-blur": "4.0.538",
+    "@remotion/noise": "4.0.538",
+    "@remotion/paths": "4.0.538",
+    "@remotion/renderer": "4.0.538",
+    "d3-geo": "3.1.1",
+    "flubber": "0.4.2",
+    "lucide-react": "1.61.0",
+    "qrcode": "1.5.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "remotion": "4.0.538",
+    "topojson-client": "3.1.0",
+    "world-atlas": "2.0.2"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "jsqr": "1.4.0",
+    "sharp": "0.35.5"
+  }
+}

@@ -21,3 +21,6 @@ Thumbs.db
 *.local
 .env
 .env.*
+
+# Film motion graphic: hasil render terlalu besar untuk Git
+motion/out/

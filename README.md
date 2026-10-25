@@ -190,6 +190,7 @@ scripts/           site-config, postbuild (prerender), serve-dist, lighthouse, s
 e2e/               tes Playwright
 legacy/            arsip situs lama (tidak di-deploy)
 docs/              AUDIT.md, tangkapan layar, MASTERPROMPT-MOTION.md (prompt film motion graphic)
+motion/            proyek film motion graphic (Remotion) — terpisah dari aplikasi
 ```
 
 ### Bagaimana halaman bisa secepat ini
@@ -323,6 +324,15 @@ Skor nyata di situs live bisa berbeda tergantung jaringan, perangkat, dan respon
 ## Film motion graphic
 
 [`docs/MASTERPROMPT-MOTION.md`](docs/MASTERPROMPT-MOTION.md) berisi master prompt untuk Claude Opus 5 guna membuat film promosi iMuslim sekelas pembuka film studio: konsep *"Cahaya yang Menuntun"*, storyboard 11 adegan, teknik sinematik, proyek Remotion di folder `motion/`, aturan konten agama, dan kriteria selesai. Prompt memakai logo, corak, dan tangkapan layar asli dari repositori ini.
+
+Film itu sudah dibuat dan ada di folder [`motion/`](motion/README.md), terpisah dari aplikasi dan tidak ikut build situs. Isinya:
+
+- **reel Instagram 9:16 berdurasi 90 detik** (deliverable utama): delapan adegan pendalaman fitur dan QR code di akhir yang terbukti terbaca dari video final, ditambah sampul potret dan caption;
+- film 60 detik 4K/60 fps, teaser 1:1, ident logo, dan loop hero web;
+- musik bernuansa Timur Tengah (oud, qanun, ney, darbuka, rebana, tepuk) yang disintesis sendiri, ditambah versi tanpa alat musik dan versi ambience;
+- subtitle SRT dan still 4K.
+
+Cara render ulang, daftar aset beserta lisensinya, dan hasil ukur ada di [`motion/README.md`](motion/README.md). Hasil render (`motion/out/`) tidak disimpan di Git karena ukurannya besar.
 
 ## Privasi
 
