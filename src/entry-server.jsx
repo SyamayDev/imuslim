@@ -12,11 +12,19 @@ import { prerenderToNodeStream } from 'react-dom/static';
 import { StaticRouter } from 'react-router-dom';
 import App from './app/App.jsx';
 import { preloadPath } from './app/pages.js';
+import { setSeed } from './app/seed.js';
+
+// Pemeta respons API dipakai postbuild untuk menyiapkan data prerender (doa, Arbain).
+export { mapEquranDoaList, mapMyquranDoaList } from './services/api/doa.js';
+export { mapArbain } from './services/api/hadits.js';
+export { serializeSeed } from './app/seed.js';
 
 const BASENAME = import.meta.env.BASE_URL.replace(/\/$/, '');
 
-export async function render(path) {
+/** `seed`: data prerender untuk halaman ini (lihat app/seed.js), mis. isi satu doa. */
+export async function render(path, seed = {}) {
   await preloadPath(path);
+  setSeed(seed);
   const errors = [];
   const { prelude } = await prerenderToNodeStream(
     <StrictMode>

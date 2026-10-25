@@ -1,13 +1,17 @@
 import { ArrowLeft, ArrowRight, Bookmark, Copy, Share2 } from 'lucide-react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
+import { readSeed } from '../../app/seed.js';
 import { doaStore } from '../../app/stores.js';
 import { ArabicText, Paragraphs } from '../../components/ui/Content.jsx';
 import { Ornament } from '../../components/ui/Ornament.jsx';
 import { DataNotice, EmptyState, ErrorState, LoadingBlock } from '../../components/ui/Status.jsx';
 import { useToast } from '../../components/ui/Toast.jsx';
 import { useDocumentMeta } from '../../hooks/useDocumentMeta.js';
+import { useResource } from '../../hooks/useResource.js';
 import { useShare } from '../../hooks/useShare.js';
-import { DOA_COLLECTIONS } from '../../services/api/doa.js';
+import { DOA_COLLECTIONS, getDoaItem } from '../../services/api/doa.js';
+import { ERROR_KIND } from '../../services/api/errors.js';
 import { useStore } from '../../utils/storage.js';
 import { categoryLabel, useDoaList } from '../../features/doa/useDoa.js';
 import './doa.css';
@@ -15,12 +19,25 @@ import './doa.css';
 export default function DoaDetail() {
   const { koleksi, id } = useParams();
   const collection = DOA_COLLECTIONS[koleksi] ? koleksi : null;
-  const res = useDoaList(collection);
   const num = Number(id);
-  const doa = res.data?.find((d) => d.id === num) ?? null;
-  const index = res.data && doa ? res.data.indexOf(doa) : -1;
-  const prev = index > 0 ? res.data[index - 1] : null;
-  const next = index >= 0 && index < res.data.length - 1 ? res.data[index + 1] : null;
+  const valid = collection && Number.isInteger(num) && num > 0;
+  // Isi doa dari endpoint per doa (±1 KB) → tampil cepat.
+  const res = useResource(valid ? `doa:item:${collection}:${num}` : null, ({ signal, force }) => getDoaItem(collection, num, { signal, force }));
+  const doa = res.status === 'success' ? res.data : null;
+  // Judul doa sebelum/sesudah: dari data prerender bila ada; bila tidak, daftar lengkap dimuat
+  // belakangan saat halaman sudah tenang.
+  const navSeed = valid ? (readSeed(`doa:nav:${collection}:${num}`)?.data ?? null) : null;
+  const [wantList, setWantList] = useState(false);
+  useEffect(() => {
+    if (navSeed || res.status !== 'success') return undefined;
+    const t = setTimeout(() => setWantList(true), 1200);
+    return () => clearTimeout(t);
+  }, [res.status, navSeed]);
+  const list = useDoaList(wantList ? collection : null);
+  const index = list.data && doa ? list.data.findIndex((d) => d.id === doa.id) : -1;
+  const prev = navSeed ? navSeed.prev : index > 0 ? list.data[index - 1] : null;
+  const next = navSeed ? navSeed.next : index >= 0 && index < list.data.length - 1 ? list.data[index + 1] : null;
+  const notFound = res.status === 'error' && res.error?.kind === ERROR_KIND.NOT_FOUND;
   useDocumentMeta({
     title: doa ? doa.title : 'Doa',
     description: doa ? `${doa.title} — teks Arab${doa.latin ? ', latin,' : ''} dan terjemahan. Sumber: ${DOA_COLLECTIONS[koleksi].source}.` : 'Detail doa iMuslim.',
@@ -45,9 +62,9 @@ export default function DoaDetail() {
   return (
     <div className="page page--reading doa-detail">
       {back}
-      {res.status === 'loading' && <LoadingBlock label="Memuat doa…" rows={3} />}
-      {res.status === 'error' && <ErrorState error={res.error} onRetry={res.reload} title="Doa belum bisa dimuat" />}
-      {res.status === 'success' && !doa && <EmptyState title="Doa tidak ditemukan" text={`Tidak ada doa nomor ${id} di koleksi ${DOA_COLLECTIONS[koleksi].label}.`} />}
+      {(res.status === 'loading' || res.status === 'idle') && valid && <LoadingBlock label="Memuat doa…" rows={3} />}
+      {res.status === 'error' && !notFound && <ErrorState error={res.error} onRetry={res.reload} title="Doa belum bisa dimuat" />}
+      {(notFound || !valid) && <EmptyState title="Doa tidak ditemukan" text={`Tidak ada doa nomor ${id} di koleksi ${DOA_COLLECTIONS[koleksi].label}.`} />}
       {doa && (
         <>
           <DataNotice meta={res.meta} error={res.error} onRetry={res.reload} />

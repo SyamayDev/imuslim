@@ -41,6 +41,7 @@ Al-Qur'an dengan audio & tafsir · Jadwal sholat & imsakiyah · Doa & dzikir · 
 - [Sumber data & API](#sumber-data--api)
 - [Desain, corak & animasi](#desain-corak--animasi)
 - [Kualitas: aksesibilitas, tes, Lighthouse](#kualitas-aksesibilitas-tes-lighthouse)
+- [Film motion graphic](#film-motion-graphic)
 - [Privasi](#privasi)
 - [Migrasi dari versi lama](#migrasi-dari-versi-lama)
 - [Batasan yang diketahui](#batasan-yang-diketahui)
@@ -101,7 +102,7 @@ iMuslim adalah aplikasi web (PWA) untuk ibadah harian dalam Bahasa Indonesia, di
 | **Doa & dzikir** | Dua koleksi: 227 doa equran.id (dengan latin & dalil) dan 108 doa myQuran · cari, filter kategori, paginasi, simpan, salin, bagikan |
 | **Hadits** | 9 kitab (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasai, Ibnu Majah, Ahmad, Malik, Darimi) + Arbain An-Nawawi · paginasi, lompat ke nomor, simpan, salin, bagikan |
 | **Kalender** | Masehi & Hijriah berdampingan, navigasi bulan/tahun & keyboard, hari besar Islam (perkiraan), acara pribadi (tambah/ubah/hapus/bagikan), pembanding tanggal myQuran |
-| **Kiblat** | Arah & jarak ke Ka'bah dihitung lokal dari GPS, nama tempat, atau koordinat manual · kompas perangkat (termasuk izin iOS) dengan deteksi sensor yang jujur |
+| **Kiblat** | Cukup satu tombol **"Gunakan lokasi saya"**: arah & jarak ke Ka'bah dihitung lokal di perangkat · bila izin lokasi ditolak, ketik nama kota (tanpa istilah lintang/bujur) · kompas perangkat (termasuk izin iOS) dengan deteksi sensor yang jujur |
 | **Zakat** | Penghasilan, maal (dengan haul & utang), fitrah · harga emas referensi bertanggal atau isi manual · rumus & asumsi ditampilkan |
 | **Pengaturan** | Tema terang/gelap (awalnya mengikuti perangkat), layar penuh, ukuran teks Arab, latin/terjemahan, qari, kota, pengingat, penyesuaian Hijriah, nama sapaan, pasang aplikasi, ekspor/impor/hapus data lokal |
 | **Umum** | Navigasi bawah di ponsel, rail/sidebar di tablet & desktop, tombol layar penuh, PWA yang bisa dipasang, halaman yang pernah dibuka tetap tersedia offline, pemutar audio tunggal (tidak pernah bertumpuk) dengan kontrol layar kunci |
@@ -188,7 +189,7 @@ public/            brand/, icons/, audio/ (adzan), manifest.webmanifest, sw.js
 scripts/           site-config, postbuild (prerender), serve-dist, lighthouse, screenshots, brand, gh-pages-prepare
 e2e/               tes Playwright
 legacy/            arsip situs lama (tidak di-deploy)
-docs/              AUDIT.md, tangkapan layar
+docs/              AUDIT.md, tangkapan layar, MASTERPROMPT-MOTION.md (prompt film motion graphic)
 ```
 
 ### Bagaimana halaman bisa secepat ini
@@ -204,7 +205,8 @@ flowchart LR
   R --> Y[hydrateRoot:<br/>halaman jadi interaktif]
 ```
 
-1. **Prerender.** Setiap route statis (10 halaman utama, 114 surah, 9 kitab hadits, 42 Arbain, 335 detail doa) dirender React di Node menjadi HTML lengkap. Hasilnya bisa dibuka atau di-refresh langsung dengan status **HTTP 200**, dan masing-masing punya `<title>`, deskripsi, canonical, serta Open Graph sendiri.
+1. **Prerender + data.** Setiap route statis (10 halaman utama, 114 surah, 9 kitab hadits, 42 Arbain, 335 detail doa) dirender React di Node menjadi HTML lengkap. Hasilnya bisa dibuka atau di-refresh langsung dengan status **HTTP 200**, dan masing-masing punya `<title>`, deskripsi, canonical, serta Open Graph sendiri.
+   Isi **227 + 108 doa dan 42 hadits Arbain** juga diambil dari API saat build (pemeta & validasi yang sama dengan aplikasi) lalu ditanam di halamannya, sehingga teks doa/hadits tampil tanpa menunggu API dan bisa dirayapi mesin pencari. Di browser, data tetap diperiksa ulang ke sumber; bila sumber gagal, teks ditandai *"mungkin usang"*.
 2. **Tanpa permintaan yang menghalangi cat pertama.** Seluruh CSS (±17 KB gzip) di-inline. Font di-preload (font Arab hanya di halaman yang memuat teks Arab). Skrip satu-satunya diberi `fetchpriority="low"`.
 3. **JavaScript setelah cat pertama.** `main.jsx` menunggu *First Contentful Paint*, baru memuat React dan modul halaman. Hydration berjalan di dalam `startTransition` sehingga thread utama tidak terkunci.
 4. **Hydration yang aman.** Nilai yang hanya diketahui di perangkat pengguna (isi `localStorage`, jam, dukungan API browser) memakai `useSyncExternalStore` dengan nilai bawaan saat prerender. Hasilnya, HTML statis dan render pertama di browser identik (tanpa *hydration mismatch*), lalu React langsung memperbaruinya dengan nilai sebenarnya. Kerangka (*skeleton*) punya ukuran yang sama dengan konten akhir sehingga tidak ada pergeseran tata letak.
@@ -295,26 +297,32 @@ Semua endpoint diuji pada **24 Oktober 2026** (status HTTP, CORS, bentuk JSON, e
 
 | Jenis | Jumlah | Cakupan |
 |---|---|---|
-| Unit & komponen (Vitest) | 154 tes / 11 file | kiblat, Hijriah (dibandingkan dengan ICU), waktu sholat & zona, zakat, teks aman, pencocokan kota, client API (timeout/400/404/429/5xx/CORS/retry/dedupe/cache usang/cadangan), pemetaan respons asli 15 endpoint (termasuk ID kota berawalan nol), migrasi data lama, storage rusak, render server vs klien (nilai bawaan saat prerender), `lazyPage` (preload, gagal → ErrorBoundary), konfigurasi GitHub Pages/Vercel, fullscreen, tema, paginasi, kontras warna |
-| End-to-end (Playwright) | 82 tes (desktop + ponsel) | HTML prerender berisi konten; semua route dibuka langsung & di-refresh tanpa error hydration; alamat lama; 404; navigasi; tanpa scroll horizontal di lebar 320–1440 px; tema & layar penuh; aksesibilitas dasar; alur Al-Qur'an/audio/jadwal/izin lokasi ditolak/doa/hadits/kalender/kiblat/zakat terhadap API sungguhan |
+| Unit & komponen (Vitest) | 159 tes / 11 file | kiblat, Hijriah (dibandingkan dengan ICU), waktu sholat & zona, zakat, teks aman, pencocokan kota, client API (timeout/400/404/429/5xx/CORS/retry/dedupe/cache usang/cadangan), pemetaan respons asli 15 endpoint (termasuk ID kota berawalan nol), migrasi data lama, storage rusak, render server vs klien (nilai bawaan saat prerender), `lazyPage` (preload, gagal → ErrorBoundary), konfigurasi GitHub Pages/Vercel, fullscreen, tema, paginasi, kontras warna |
+| End-to-end (Playwright) | 88 tes (desktop + ponsel) | HTML prerender berisi konten; semua route dibuka langsung & di-refresh tanpa error hydration; alamat lama; 404; navigasi; tanpa scroll horizontal di lebar 320–1440 px; tema & layar penuh; aksesibilitas dasar; alur Al-Qur'an/audio/jadwal/izin lokasi ditolak/doa/hadits/kalender/kiblat/zakat terhadap API sungguhan |
 
-**Lighthouse**: diukur 24 Oktober 2026 dengan Lighthouse 13.5.0 (Chrome 156.0.0.0, throttling simulasi bawaan: ponsel Moto G Power + 4G lambat, dan desktop) terhadap build produksi yang dilayani persis seperti GitHub Pages (`npm run build && npm run lighthouse`). Hasilnya **100 di keempat kategori pada 22 pengukuran** (11 route × mobile & desktop).
+**Lighthouse**: diukur 25 Oktober 2026 dengan Lighthouse 13.5.0 (Chrome 156.0.0.0, throttling simulasi bawaan: ponsel Moto G Power + 4G lambat, dan desktop) terhadap build produksi yang dilayani persis seperti GitHub Pages (`npm run build && npm run lighthouse`). Hasilnya **100 di keempat kategori pada 26 pengukuran** (13 halaman × mobile & desktop), termasuk halaman detail doa dan hadits.
 
 | Route | Mobile P · A · BP · SEO | Desktop P · A · BP · SEO | Mobile FCP · LCP · TBT · CLS |
 |---|---|---|---|
 | `/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 0,9 s · 1,4 s · 0 ms · 0,001 |
 | `/quran/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,8 s · 30 ms · 0,001 |
-| `/quran/1/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,8 s · 40 ms · 0,001 |
-| `/sholat/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,4 s · 30 ms · 0,001 |
+| `/quran/1/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,8 s · 50 ms · 0,001 |
+| `/sholat/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,4 s · 40 ms · 0,001 |
 | `/doa/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,4 s · 20 ms · 0,001 |
 | `/hadits/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 0,9 s · 1,4 s · 0 ms · 0,001 |
 | `/kalender/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 0,9 s · 1,4 s · 0 ms · 0,001 |
-| `/kiblat/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,4 s · 30 ms · 0,001 |
+| `/kiblat/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 0,9 s · 1,4 s · 0 ms · 0,001 |
 | `/zakat/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,4 s · 40 ms · 0,001 |
 | `/pengaturan/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 1,0 s · 1,8 s · 40 ms · 0,001 |
 | `/tentang/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 0,9 s · 1,4 s · 0 ms · 0,001 |
+| `/doa/equran/2/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 0,9 s · 1,8 s · 0 ms · 0,001 |
+| `/hadits/arbain/1/` | **100 · 100 · 100 · 100** | **100 · 100 · 100 · 100** | 0,9 s · 1,8 s · 0 ms · 0,001 |
 
 Skor nyata di situs live bisa berbeda tergantung jaringan, perangkat, dan respons API pihak ketiga.
+
+## Film motion graphic
+
+[`docs/MASTERPROMPT-MOTION.md`](docs/MASTERPROMPT-MOTION.md) berisi master prompt untuk Claude Opus 5 guna membuat film promosi iMuslim sekelas pembuka film studio: konsep *"Cahaya yang Menuntun"*, storyboard 11 adegan, teknik sinematik, proyek Remotion di folder `motion/`, aturan konten agama, dan kriteria selesai. Prompt memakai logo, corak, dan tangkapan layar asli dari repositori ini.
 
 ## Privasi
 
@@ -347,6 +355,7 @@ Detail lengkap: [`docs/AUDIT.md`](docs/AUDIT.md).
 - Kota Sofifi tidak memiliki data jadwal di api.myquran.com.
 - Di GitHub Pages, detail hadits per nomor yang dibuka langsung dilayani via `404.html`: berfungsi di browser, tetapi berstatus 404 bagi crawler. Di Vercel, statusnya 200.
 - Halaman yang belum pernah dibuka tidak tersedia saat offline; aplikasi akan memberi tahu dengan jelas.
+- Isi doa & Arbain di HTML adalah salinan saat build; bila sumber mengubah teksnya, versi terbaru muncul setelah halaman diperiksa ulang ke API (otomatis) atau setelah build berikutnya.
 
 ## Kontribusi & kredit
 

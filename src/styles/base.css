@@ -56,6 +56,19 @@ p {
   margin: 0;
   text-wrap: pretty;
 }
+/* Teks dari API bisa memuat kata/URL sangat panjang (mis. tautan sumber doa): boleh dipatahkan
+   agar tidak pernah melebarkan halaman di ponsel. */
+p,
+li,
+dd,
+blockquote,
+figcaption,
+summary,
+h1,
+h2,
+h3 {
+  overflow-wrap: anywhere;
+}
 ul,
 ol {
   margin: 0;

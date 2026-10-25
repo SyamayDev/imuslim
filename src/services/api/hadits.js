@@ -6,6 +6,7 @@
 // Arbain An-Nawawi (42 hadits) dari api.myquran.com/v2/hadits/arbain.
 import { ApiError, ERROR_KIND } from './errors.js';
 import { assert, cachedRequest, DAY, fetchJson, pLimit } from './client.js';
+import { cacheGet } from './cache.js';
 
 const PRIMARY = 'https://hadis-api-id.vercel.app';
 const MYQURAN = 'https://api.myquran.com/v2/hadits';
@@ -142,3 +143,28 @@ export function getArbain({ signal, force } = {}) {
 }
 
 export const ARBAIN_BOOK = { slug: ARBAIN_SLUG, name: 'Arbain An-Nawawi', total: 42 };
+
+// ---------- Satu hadits Arbain (halaman detail) ----------
+// Cukup satu hadits (±2 KB) alih-alih seluruh 42 hadits (±80 KB); daftar lengkap yang sudah
+// tersimpan (mis. dari beranda) dipakai bila ada.
+export function mapArbainItem(json, n) {
+  if (json && json.status === false) throw new ApiError(ERROR_KIND.NOT_FOUND, 'Hadits tidak ditemukan');
+  assert(json && json.status === true && json.data && typeof json.data === 'object' && !Array.isArray(json.data), 'Respons Arbain tidak valid');
+  const [item] = mapArbain({ status: true, data: [{ ...json.data, no: json.data.no ?? n }] });
+  return { ...item, number: n };
+}
+
+export async function getArbainItem(n, { signal, force } = {}) {
+  if (!force) {
+    const list = await cacheGet('hadits:arbain');
+    const hit = list?.data?.find?.((h) => h.number === n);
+    if (hit) return { data: hit, fetchedAt: list.savedAt, stale: false, fromCache: true };
+  }
+  return cachedRequest({
+    key: `hadits:arbain:item:${n}`,
+    ttl: 30 * DAY,
+    force,
+    signal,
+    load: (s) => fetchJson(`${MYQURAN}/arbain/${n}`, { signal: s, validate: (j) => mapArbainItem(j, n) }),
+  });
+}

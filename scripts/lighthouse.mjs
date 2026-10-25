@@ -14,7 +14,7 @@ const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = resolve(root, 'reports/lighthouse');
 const PORT = 4321;
 const BASE = `http://localhost:${PORT}${resolveSite().base.replace(/\/$/, '')}`;
-const routes = process.argv.slice(2).length ? process.argv.slice(2) : ['/', '/quran/', '/quran/1/', '/sholat/', '/doa/', '/hadits/', '/kalender/', '/kiblat/', '/zakat/', '/pengaturan/', '/tentang/'];
+const routes = process.argv.slice(2).length ? process.argv.slice(2) : ['/', '/quran/', '/quran/1/', '/sholat/', '/doa/', '/hadits/', '/kalender/', '/kiblat/', '/zakat/', '/pengaturan/', '/tentang/', '/doa/equran/2/', '/hadits/arbain/1/'];
 const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 
 await mkdir(outDir, { recursive: true });

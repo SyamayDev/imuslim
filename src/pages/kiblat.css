@@ -19,16 +19,6 @@
   gap: 18px;
   text-align: center;
 }
-.compass-panel--empty {
-  padding-block: 48px;
-  gap: 8px;
-}
-.compass-panel__placeholder {
-  width: 64px;
-  height: 64px;
-  color: var(--gold-line);
-  margin-bottom: 8px;
-}
 .compass-readout__deg {
   font-family: var(--font-display);
   font-weight: 600;
@@ -133,30 +123,128 @@
   color: var(--ink-2);
 }
 
-.location-panel {
+/* ---------- Mulai: satu tombol lokasi ---------- */
+.qibla-start {
+  position: relative;
   display: grid;
+  justify-items: center;
   gap: 12px;
+  padding-block: clamp(28px, 6vw, 44px);
+  text-align: center;
+  overflow: hidden;
+  isolation: isolate;
 }
-.location-panel__status {
+.qibla-start__art {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 132px;
+  height: 132px;
+  margin-bottom: 6px;
+}
+.qibla-start__rosette {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  color: var(--gold-line);
+  opacity: 0.5;
+  animation: spin-slow 120s linear infinite;
+}
+.qibla-start__medallion {
+  width: 76px;
+  height: 76px;
+}
+.qibla-start__title {
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: var(--fs-2xl);
+  line-height: 1.2;
+}
+.qibla-start__text {
+  max-width: 40ch;
+  color: var(--ink-2);
+}
+.qibla-start__cta {
+  width: min(100%, 360px);
+  margin-top: 8px;
+  border-radius: var(--radius-full);
+}
+.qibla-start__alt {
+  font-size: var(--fs-sm);
+}
+.qibla-start .place-search {
+  width: min(100%, 420px);
+  text-align: left;
+}
+
+.location-status {
   min-height: 1.2em;
+  max-width: 46ch;
   font-size: var(--fs-sm);
   color: var(--ink-2);
 }
-.location-panel__status.is-error {
+.location-status:empty {
+  display: none;
+}
+.location-status.is-error {
   color: var(--danger);
 }
-.location-search {
+
+/* ---------- Lokasi yang dipakai (di bawah kompas) ---------- */
+.qibla-place {
   display: grid;
-  gap: 6px;
-  padding-top: 12px;
+  justify-items: center;
+  gap: 10px;
+  width: 100%;
+  padding-top: 14px;
   border-top: 1px solid var(--line);
 }
-.location-search__row {
+.qibla-place__label {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 6px;
+  max-width: 46ch;
+  font-size: var(--fs-sm);
+  color: var(--ink-2);
+  overflow-wrap: anywhere;
+}
+.qibla-place__label svg {
+  width: 16px;
+  height: 16px;
+  margin-top: 3px;
+  flex-shrink: 0;
+  color: var(--brand-ink);
+}
+.qibla-place__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+}
+.qibla-place .place-search {
+  width: min(100%, 420px);
+  text-align: left;
+}
+
+/* ---------- Cari kota ---------- */
+.place-search {
+  display: grid;
+  gap: 6px;
+}
+.place-search__row {
   display: flex;
   gap: 8px;
 }
-.location-search__row .input {
+.place-search__row .input {
   flex: 1;
+  min-width: 0;
+}
+.place-search__row .btn {
+  flex-shrink: 0;
+  width: 48px;
+  padding: 0;
 }
 .place-results {
   list-style: none;
@@ -174,6 +262,7 @@
   background: var(--surface);
   text-align: left;
   font-size: var(--fs-sm);
+  overflow-wrap: anywhere;
 }
 .place-results button:hover {
   border-color: var(--brand);
@@ -182,25 +271,9 @@
   font-size: var(--fs-xs);
   color: var(--ink-3);
 }
-.manual-coords {
-  padding-top: 12px;
-  border-top: 1px solid var(--line);
-}
-.manual-coords fieldset {
-  border: 0;
-  margin: 0;
-  padding: 0;
-  display: grid;
-  gap: 8px;
-}
-.manual-coords__grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-}
 
 .kiblat-howto {
-  margin-top: 16px;
+  align-self: start;
 }
 .kiblat-howto ol {
   display: grid;

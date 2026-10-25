@@ -20,6 +20,9 @@ const ROUTES = [
   ['zakat/', /Kalkulator Zakat/],
   ['pengaturan/', /Pengaturan/],
   ['tentang/', /Tentang iMuslim/],
+  // Halaman detail dengan isi yang ikut diprerender (data API saat build).
+  ['doa/equran/2/', /Doa Sebelum Tidur 2/],
+  ['hadits/arbain/1/', /Amalan Bergantung pada Niat/],
 ];
 
 /** Kumpulkan error console/halaman dari kode kita (bukan permintaan API pihak ketiga). */
@@ -56,6 +59,7 @@ test.describe('route & refresh', () => {
       ['quran/36/', 'Yasin'],
       ['sholat/', 'Jadwal Sholat &amp; Imsakiyah'],
       ['zakat/', 'Kalkulator Zakat'],
+      ['doa/equran/2/', 'Doa Sebelum Tidur 2'],
     ]) {
       const res = await request.get(path);
       expect(res.status()).toBe(200);
@@ -123,7 +127,8 @@ test.describe('responsif', () => {
   for (const width of [320, 375, 430, 768, 1024, 1280, 1440]) {
     test(`tanpa scroll horizontal di lebar ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
-      for (const path of ['', 'quran/', 'quran/1/', 'sholat/', 'doa/', 'kalender/', 'kiblat/', 'zakat/', 'pengaturan/', 'tentang/']) {
+      // Termasuk halaman detail yang memuat teks panjang dari API (tautan sumber doa, hadits, ayat).
+      for (const path of ['', 'quran/', 'quran/1/', 'quran/2/', 'sholat/', 'doa/', 'doa/equran/2/', 'hadits/', 'hadits/arbain/1/', 'kalender/', 'kiblat/', 'zakat/', 'pengaturan/', 'tentang/']) {
         await open(page, path);
         await page.waitForLoadState('networkidle');
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);

@@ -3,19 +3,22 @@ import alquranCloud112 from '../../test/fixtures/alquran-cloud-112.json';
 import ayah946 from '../../test/fixtures/alquran-cloud-ayah-94-6.json';
 import xau from '../../test/fixtures/currency-xau.json';
 import equranDoa from '../../test/fixtures/equran-doa.json';
+import equranDoa2 from '../../test/fixtures/equran-doa-2.json';
+import myqDoa2 from '../../test/fixtures/myquran-doa-2.json';
 import equran112 from '../../test/fixtures/equran-surat-112.json';
 import tafsir112 from '../../test/fixtures/equran-tafsir-112.json';
 import booksJson from '../../test/fixtures/hadis-api-books.json';
 import muslimP2 from '../../test/fixtures/hadis-api-muslim-p2.json';
 import arbain from '../../test/fixtures/myquran-arbain.json';
+import arbain1 from '../../test/fixtures/myquran-arbain-1.json';
 import myqDoa from '../../test/fixtures/myquran-doa.json';
 import bukhari1 from '../../test/fixtures/myquran-hadits-bukhari-1.json';
 import hijr from '../../test/fixtures/myquran-hijr-2026-10-24.json';
 import jadwalAceh from '../../test/fixtures/myquran-jadwal-0105-2026-10.json';
 import jadwal from '../../test/fixtures/myquran-jadwal-1301-2026-10.json';
 import kota from '../../test/fixtures/myquran-kota.json';
-import { mapEquranDoaList, mapMyquranDoaList } from './doa.js';
-import { mapArbain, mapBooks, mapMyquranHadith, mapPage } from './hadits.js';
+import { mapEquranDoaItem, mapEquranDoaList, mapMyquranDoaItem, mapMyquranDoaList } from './doa.js';
+import { mapArbain, mapArbainItem, mapBooks, mapMyquranHadith, mapPage } from './hadits.js';
 import { mapGold } from './misc.js';
 import { DAILY_AYAH_REFS, mapAlquranCloudAyah, mapAlquranCloudSurah, mapEquranSurah, mapTafsir, SURAH_INDEX } from './quran.js';
 import { mapCities, mapHijriReference, mapSchedule } from './sholat.js';
@@ -91,6 +94,38 @@ describe('doa', () => {
   });
   it('skema lama (arab/indo) ditolak sebagai data kosong', () => {
     expect(() => mapMyquranDoaList({ status: true, data: [{ judul: 'x', arab: 'y', indo: 'z' }] })).toThrow();
+  });
+});
+
+describe('doa per nomor (halaman detail)', () => {
+  it('equran.id /api/doa/2 → satu doa lengkap', () => {
+    const d = mapEquranDoaItem(equranDoa2);
+    expect(d).toMatchObject({ collection: 'equran', id: 2, title: 'Doa Sebelum Tidur 2' });
+    expect(d.arab).toBeTruthy();
+    expect(d.latin).toBeTruthy();
+    expect(d.about).toMatch(/Bukhari/);
+  });
+  it('myQuran /v2/doa/2 → ID mengikuti nomor yang diminta', () => {
+    const d = mapMyquranDoaItem(myqDoa2, 2);
+    expect(d).toMatchObject({ collection: 'myquran', id: 2 });
+    expect(d.arab).toBeTruthy();
+  });
+  it('nomor tidak ada → NOT_FOUND (bukan galat format)', () => {
+    expect(() => mapEquranDoaItem({ status: 'error', message: 'Data doa dengan nomor 9999 tidak ditemukan.' })).toThrow(/tidak ditemukan/);
+    expect(() => mapMyquranDoaItem({ status: false, message: 'data not found' }, 999)).toThrow(/tidak ditemukan/);
+  });
+});
+
+describe('Arbain per nomor (halaman detail)', () => {
+  it('/v2/hadits/arbain/1 → satu hadits, sama dengan item di daftar lengkap', () => {
+    const one = mapArbainItem(arbain1, 1);
+    const fromList = mapArbain(arbain).find((h) => h.number === 1);
+    expect(one).toMatchObject({ book: 'arbain', number: 1, title: 'Amalan Bergantung pada Niat' });
+    expect(one.arab).toBe(fromList.arab);
+    expect(one.translation).toBe(fromList.translation);
+  });
+  it('nomor di luar 1–42 → NOT_FOUND', () => {
+    expect(() => mapArbainItem({ status: false, message: 'data not found' }, 99)).toThrow(/tidak ditemukan/);
   });
 });
 

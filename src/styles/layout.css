@@ -39,14 +39,16 @@
   gap: 8px;
   height: calc(var(--header-h) + env(safe-area-inset-top));
   padding: env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) 0 max(12px, env(safe-area-inset-left));
-  background: color-mix(in srgb, var(--bg) 88%, transparent);
-  backdrop-filter: saturate(1.4) blur(10px);
-  -webkit-backdrop-filter: saturate(1.4) blur(10px);
+  /* Pekat: konten yang lewat di bawahnya tidak tembus terlihat. */
+  background: var(--bg);
   border-bottom: 1px solid transparent;
-  transition: border-color var(--dur-2) var(--ease-out);
+  transition:
+    border-color var(--dur-2) var(--ease-out),
+    box-shadow var(--dur-2) var(--ease-out);
 }
 .topbar.is-scrolled {
   border-bottom-color: var(--line);
+  box-shadow: 0 6px 16px -14px rgba(0, 0, 0, 0.45);
 }
 .topbar__brand {
   display: flex;
@@ -85,10 +87,9 @@
   grid-template-columns: repeat(5, 1fr);
   height: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom));
   padding: 0 max(4px, env(safe-area-inset-right)) env(safe-area-inset-bottom) max(4px, env(safe-area-inset-left));
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  backdrop-filter: saturate(1.4) blur(12px);
-  -webkit-backdrop-filter: saturate(1.4) blur(12px);
+  background: var(--surface);
   border-top: 1px solid var(--line);
+  box-shadow: 0 -6px 16px -14px rgba(0, 0, 0, 0.4);
 }
 .bottom-nav__item {
   position: relative;

@@ -50,7 +50,7 @@ const DEMO = process.env.NOPREFS
   : {
       'imuslim:prefs': { theme: 'system', cityId: '1301', cityName: 'Kota Jakarta', qari: '05', arabicScale: 1, showLatin: true, showTranslation: true, hijriOffset: 0 },
       'imuslim:quran': { favorites: [1, 18, 36, 67], bookmarks: [{ surah: 2, ayah: 255, surahLatin: 'Al-Baqarah', savedAt: 1 }], lastRead: { surah: 18, ayah: 10, surahLatin: 'Al-Kahf', at: 1 } },
-      'imuslim:qibla': { lat: -6.2088, lon: 106.8456, label: 'Jakarta (contoh koordinat)', source: 'manual' },
+      'imuslim:qibla': { lat: -6.2088, lon: 106.8456, label: 'Kota Jakarta (contoh lokasi)', source: 'search' },
       'imuslim:migrated': '1',
     };
 

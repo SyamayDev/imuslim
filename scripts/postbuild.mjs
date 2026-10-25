@@ -20,7 +20,34 @@ const dist = resolve(root, 'dist');
 const ssrDir = resolve(root, 'dist-ssr');
 const { base: BASE_PATH, url: SITE } = resolveSite();
 const surahIndex = JSON.parse(await readFile(resolve(root, 'src/data/surah-index.json'), 'utf8'));
-const { render } = await import(pathToFileURL(resolve(ssrDir, 'entry-server.js')).href);
+const { render, mapEquranDoaList, mapMyquranDoaList, mapArbain, serializeSeed } = await import(pathToFileURL(resolve(ssrDir, 'entry-server.js')).href);
+
+// ---------- Data prerender: isi doa & Arbain ----------
+// Diambil sekali saat build dari API yang sama dengan aplikasi (divalidasi oleh pemeta yang
+// sama), lalu ditanam di halaman detail → teks tampil sebelum JavaScript berjalan dan bisa
+// dirayapi mesin pencari. Di browser data tetap diperiksa ulang ke sumber. Bila API gagal saat
+// build, halaman tetap dibuat tanpa data (dimuat dari API di browser). PRERENDER_DATA=0 mematikan.
+async function fetchDataset(label, url, mapper) {
+  if (process.env.PRERENDER_DATA === '0') return null;
+  try {
+    const res = await fetch(url, { signal: AbortSignal.timeout(25000), headers: { Accept: 'application/json' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return mapper(await res.json());
+  } catch (error) {
+    console.warn(`! data prerender ${label} dilewati (${error.message}); halaman memuat data dari API di browser`);
+    return null;
+  }
+}
+const DATA_FETCHED_AT = Date.now();
+const [DOA_EQURAN, DOA_MYQURAN, ARBAIN] = await Promise.all([
+  fetchDataset('doa equran.id', 'https://equran.id/api/doa', mapEquranDoaList),
+  fetchDataset('doa myQuran', 'https://api.myquran.com/v2/doa/semua', mapMyquranDoaList),
+  fetchDataset('Arbain', 'https://api.myquran.com/v2/hadits/arbain/semua', mapArbain),
+]);
+const clip = (text, max) => {
+  const clean = String(text ?? '').replace(/\s+/g, ' ').trim();
+  return clean.length > max ? `${clean.slice(0, max - 1).replace(/\s+\S*$/, '')}…` : clean;
+};
 
 export const ROUTES = [
   { path: '/', title: 'iMuslim — Teman Ibadah Harian', description: null },
@@ -175,11 +202,12 @@ async function writePage(path, html, options) {
 }
 
 /** Halaman prerender: HTML React disisipkan ke #root dan ditandai path-nya untuk hydration. */
-async function prerenderPage(path, meta) {
-  const app = await render(path);
+async function prerenderPage(path, meta, seed = null) {
+  const app = await render(path, seed ?? {});
+  const seedTag = seed ? `<script type="application/json" id="imuslim-seed">${serializeSeed(seed)}</script>\n    ` : '';
   const html = withMeta(template, meta).replace(
     /<div id="root"><!--app-html-->[\s\S]*?<!--\/app-html--><\/div>/,
-    () => `<div id="root" data-ssr="${esc(path)}">${app}</div>`,
+    () => `${seedTag}<div id="root" data-ssr="${esc(path)}">${app}</div>`,
   );
   await writePage(path, html, { arabic: /\blang="ar"/.test(app) });
 }
@@ -217,18 +245,46 @@ for (const [slug, name] of Object.entries(HADITH_BOOKS)) {
   DYNAMIC.push({ path: `/hadits/${slug}`, title: `Hadits ${name} · iMuslim`, description: `Baca hadits riwayat ${name} dengan teks Arab dan terjemahan Indonesia.` });
 }
 DYNAMIC.push({ path: '/hadits/arbain', title: 'Hadits Arbain An-Nawawi · iMuslim', description: '42 hadits Arbain An-Nawawi dengan teks Arab dan terjemahan Indonesia.' });
-for (let i = 1; i <= 42; i++) {
-  DYNAMIC.push({ path: `/hadits/arbain/${i}`, title: `Hadits Arbain An-Nawawi No. ${i} · iMuslim`, description: `Hadits Arbain An-Nawawi nomor ${i} dengan teks Arab dan terjemahan Indonesia.` });
+
+// Arbain: isi tiap hadits ikut diprerender bila data build tersedia.
+const arbainNumbers = ARBAIN ? ARBAIN.map((h) => h.number) : Array.from({ length: 42 }, (_, i) => i + 1);
+for (const n of arbainNumbers) {
+  const item = ARBAIN?.find((h) => h.number === n);
+  DYNAMIC.push({
+    path: `/hadits/arbain/${n}`,
+    title: item?.title ? `Hadits Arbain No. ${n}: ${clip(item.title, 70)} · iMuslim` : `Hadits Arbain An-Nawawi No. ${n} · iMuslim`,
+    description: item ? `Hadits Arbain An-Nawawi nomor ${n}: ${clip(item.translation, 130)}` : `Hadits Arbain An-Nawawi nomor ${n} dengan teks Arab dan terjemahan Indonesia.`,
+    seed: item ? { [`hadits:arbain:item:${n}`]: { data: item, fetchedAt: DATA_FETCHED_AT } } : null,
+  });
 }
-for (let i = 1; i <= 227; i++) {
-  DYNAMIC.push({ path: `/doa/equran/${i}`, title: 'Doa & Dzikir · iMuslim', description: 'Doa dengan teks Arab, latin, terjemahan, dan keterangan dalil dari equran.id.' });
+
+// Doa: isi + judul doa sebelum/sesudah ikut diprerender bila data build tersedia.
+function doaPages(collection, list, fallbackCount, label, source) {
+  const ids = list ? list.map((d) => d.id) : Array.from({ length: fallbackCount }, (_, i) => i + 1);
+  return ids.map((id, i) => {
+    const doa = list?.[i];
+    const brief = (d) => (d ? { id: d.id, title: d.title } : null);
+    return {
+      path: `/doa/${collection}/${id}`,
+      title: doa ? `${clip(doa.title, 70)} · ${label} · iMuslim` : `${label} · iMuslim`,
+      description: doa ? `${clip(doa.title, 60)}: ${clip(doa.translation, 120)} Teks Arab dan terjemahan dari ${source}.` : `Doa dengan teks Arab dan terjemahan dari ${source}.`,
+      seed: doa
+        ? {
+            [`doa:item:${collection}:${id}`]: { data: doa, fetchedAt: DATA_FETCHED_AT },
+            [`doa:nav:${collection}:${id}`]: { data: { prev: brief(list[i - 1]), next: brief(list[i + 1]) } },
+          }
+        : null,
+    };
+  });
 }
-for (let i = 1; i <= 108; i++) {
-  DYNAMIC.push({ path: `/doa/myquran/${i}`, title: 'Kumpulan Doa · iMuslim', description: 'Doa dengan teks Arab dan terjemahan dari api.myquran.com.' });
-}
+DYNAMIC.push(...doaPages('equran', DOA_EQURAN, 227, 'Doa & Dzikir', 'equran.id'));
+DYNAMIC.push(...doaPages('myquran', DOA_MYQURAN, 108, 'Kumpulan Doa', 'api.myquran.com'));
+
+let seeded = 0;
 for (const r of DYNAMIC) {
-  await prerenderPage(r.path, { title: r.title, description: r.description, canonical: r.path });
+  await prerenderPage(r.path, { title: r.title, description: r.description, canonical: r.path }, r.seed ?? null);
   prerendered++;
+  if (r.seed) seeded++;
 }
 
 // Alamat lama & 404: tanpa prerender (klien mengalihkan / merender halaman yang tepat).
@@ -265,5 +321,6 @@ await rm(ssrDir, { recursive: true, force: true });
 console.log(
   `postbuild: base ${BASE_PATH} · situs ${SITE}\n` +
     `  ${prerendered} halaman prerender (${ROUTES.length} route, ${surahIndex.surahs.length} surah, ${DYNAMIC.length} dinamis) + ${LEGACY.length} alamat lama + 404.html\n` +
+    `  ${seeded} halaman berisi data prerender (doa equran ${DOA_EQURAN?.length ?? 0}, doa myQuran ${DOA_MYQURAN?.length ?? 0}, Arbain ${ARBAIN?.length ?? 0})\n` +
     `  CSS inline ${(css.length / 1024).toFixed(1)} KB · sitemap ${urls.length} URL · sw ${buildId}`,
 );

@@ -4,6 +4,7 @@
 //    menyediakan transliterasi latin, sehingga latin tidak ditampilkan (tidak dikarang).
 import { ApiError, ERROR_KIND } from './errors.js';
 import { assert, cachedRequest, DAY, fetchJson } from './client.js';
+import { cacheGet } from './cache.js';
 
 export const DOA_COLLECTIONS = {
   equran: { id: 'equran', label: 'Doa & Dzikir', source: 'equran.id', url: 'https://equran.id/api/doa' },
@@ -71,5 +72,56 @@ export function getDoaList(collection, { signal, force } = {}) {
     force,
     signal,
     load: (s) => fetchJson(meta.url, { signal: s, validate: mapper, timeout: 15000 }),
+  });
+}
+
+// ---------- Satu doa (halaman detail) ----------
+// Halaman detail cukup memuat satu doa (±1 KB) alih-alih seluruh koleksi (±280 KB).
+// Bila daftar lengkap sudah tersimpan (pengguna datang dari halaman daftar), itu yang dipakai.
+const ITEM_URL = {
+  equran: (id) => `https://equran.id/api/doa/${id}`,
+  myquran: (id) => `https://api.myquran.com/v2/doa/${id}`,
+};
+
+export function mapEquranDoaItem(json) {
+  if (json && json.status === 'error') throw new ApiError(ERROR_KIND.NOT_FOUND, 'Doa tidak ditemukan');
+  assert(json && json.status === 'success' && json.data && typeof json.data === 'object' && !Array.isArray(json.data), 'Respons doa equran.id tidak valid');
+  return mapEquranDoaList({ status: 'success', data: [json.data] })[0];
+}
+
+export function mapMyquranDoaItem(json, id) {
+  if (json && json.status === false) throw new ApiError(ERROR_KIND.NOT_FOUND, 'Doa tidak ditemukan');
+  assert(json && json.status === true && json.data && typeof json.data === 'object', 'Respons doa myQuran tidak valid');
+  const [item] = mapMyquranDoaList({ status: true, data: [json.data] });
+  return { ...item, id };
+}
+
+export async function getDoaItem(collection, id, { signal, force } = {}) {
+  if (!DOA_COLLECTIONS[collection]) throw new ApiError(ERROR_KIND.NOT_FOUND, 'Koleksi doa tidak dikenal');
+  if (!force) {
+    const list = await cacheGet(`doa:list:${collection}`);
+    const hit = list?.data?.find?.((d) => d.id === id);
+    if (hit) return { data: hit, fetchedAt: list.savedAt, stale: false, fromCache: true };
+  }
+  return cachedRequest({
+    key: `doa:item:${collection}:${id}`,
+    ttl: 30 * DAY,
+    force,
+    signal,
+    load: async (s) => {
+      try {
+        return await fetchJson(ITEM_URL[collection](id), {
+          signal: s,
+          validate: (j) => (collection === 'equran' ? mapEquranDoaItem(j) : mapMyquranDoaItem(j, id)),
+        });
+      } catch (error) {
+        if (error?.kind === ERROR_KIND.NOT_FOUND || error?.name === 'AbortError') throw error;
+        // Endpoint per doa bermasalah → cari di daftar lengkap dari sumber yang sama.
+        const list = await getDoaList(collection, { signal: s });
+        const hit = list.data.find((d) => d.id === id);
+        if (!hit) throw new ApiError(ERROR_KIND.NOT_FOUND, 'Doa tidak ditemukan');
+        return hit;
+      }
+    },
   });
 }

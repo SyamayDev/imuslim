@@ -2,10 +2,11 @@ import { ArrowLeft, ArrowRight } from 'lucide-react';
 import { Link, useParams } from 'react-router-dom';
 import { DataNotice, EmptyState, ErrorState, LoadingBlock } from '../../components/ui/Status.jsx';
 import { HadithCard } from '../../features/hadits/HadithCard.jsx';
-import { useArbain, useBook } from '../../features/hadits/useHadits.js';
+import { useBook } from '../../features/hadits/useHadits.js';
 import { useDocumentMeta } from '../../hooks/useDocumentMeta.js';
 import { useResource } from '../../hooks/useResource.js';
-import { getHadith, HADITH_PAGE_SIZE } from '../../services/api/hadits.js';
+import { ERROR_KIND } from '../../services/api/errors.js';
+import { getArbainItem, getHadith, HADITH_PAGE_SIZE } from '../../services/api/hadits.js';
 import './hadits.css';
 
 export default function HaditsDetail() {
@@ -81,18 +82,17 @@ function BookItem({ book, n }) {
 }
 
 function ArbainItem({ n }) {
-  const res = useArbain();
+  const res = useResource(`hadits:arbain:item:${n}`, ({ signal, force }) => getArbainItem(n, { signal, force }));
   if (res.status === 'loading') return <LoadingBlock label="Memuat hadits…" rows={2} />;
+  if (res.status === 'error' && res.error?.kind === ERROR_KIND.NOT_FOUND) return <EmptyState title="Hadits tidak ditemukan" />;
   if (res.status === 'error') return <ErrorState error={res.error} onRetry={res.reload} />;
-  const item = res.data?.find((h) => h.number === n);
-  if (!item) return <EmptyState title="Hadits tidak ditemukan" />;
   return (
     <>
       <DataNotice meta={res.meta} error={res.error} onRetry={res.reload} />
       <p className="eyebrow" style={{ marginBottom: 8 }}>
         Arbain An-Nawawi
       </p>
-      <HadithCard hadith={item} bookName="Arbain An-Nawawi" headingLevel={1} linkToDetail={false} expanded />
+      <HadithCard hadith={res.data} bookName="Arbain An-Nawawi" headingLevel={1} linkToDetail={false} expanded />
     </>
   );
 }

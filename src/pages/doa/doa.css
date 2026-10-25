@@ -108,7 +108,9 @@
 /* Detail */
 .doa-card {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 18px;
+  min-width: 0;
   margin-top: 12px;
   padding: clamp(20px, 4vw, 36px);
   border-radius: var(--radius-xl);
@@ -154,6 +156,17 @@
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
+}
+/* Ponsel: tiga tombol sama lebar dalam satu baris. */
+@media (max-width: 479px) {
+  .doa-card__actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .doa-card__actions .btn {
+    padding: 0 8px;
+    gap: 6px;
+  }
 }
 .doa-card__about {
   padding: 16px;

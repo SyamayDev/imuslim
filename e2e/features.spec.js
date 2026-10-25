@@ -102,13 +102,27 @@ test.describe('doa, hadits, kalender, kiblat, zakat', () => {
     await expect(page.getByText('Belum ada acara pada tanggal ini.')).toBeVisible();
   });
 
-  test('kiblat: koordinat manual Jakarta ≈ 295°', async ({ page }) => {
-    await open(page, 'kiblat/');
-    await page.getByLabel('Lintang (latitude)').fill('-6.2088');
-    await page.getByLabel('Bujur (longitude)').fill('106.8456');
-    await page.getByRole('button', { name: 'Hitung arah kiblat' }).click();
+  test('kiblat: cukup satu tombol "Gunakan lokasi saya" (Jakarta ≈ 295°)', async ({ browser }) => {
+    const ctx = await browser.newContext({ geolocation: { latitude: -6.2088, longitude: 106.8456 }, permissions: ['geolocation'] });
+    const page = await ctx.newPage();
+    await open(page, 'http://localhost:4173/imuslim/kiblat/');
+    // Tidak ada istilah koordinat yang membingungkan orang awam.
+    await expect(page.getByText(/latitude|longitude|Lintang|Bujur/)).toHaveCount(0);
+    await page.getByRole('button', { name: 'Gunakan lokasi saya' }).click();
     await expect(page.locator('.compass-readout__deg')).toHaveText(/295[,.][12]°/);
     await expect(page.getByText(/barat laut/)).toBeVisible();
+    await expect(page.getByText(/Lokasi Anda saat ini/)).toBeVisible();
+    await ctx.close();
+  });
+
+  test('kiblat: izin lokasi ditolak → pesan jelas & bisa ketik nama kota', async ({ browser }) => {
+    const ctx = await browser.newContext({ permissions: [] });
+    const page = await ctx.newPage();
+    await open(page, 'http://localhost:4173/imuslim/kiblat/');
+    await page.getByRole('button', { name: 'Gunakan lokasi saya' }).click();
+    await expect(page.getByRole('status').filter({ hasText: /ditolak|belum bisa ditemukan|terlalu lama|tidak dapat/ })).toBeVisible();
+    await expect(page.getByLabel('Nama kota atau kabupaten')).toBeVisible();
+    await ctx.close();
   });
 
   test('zakat penghasilan dengan harga emas manual', async ({ page }) => {
