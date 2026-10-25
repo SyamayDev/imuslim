@@ -127,10 +127,10 @@ export default function Pengaturan() {
         <Section id="s-sholat" title="Kota & pengingat sholat">
           <p className="settings-section__desc">{prefs.cityId ? `Kota saat ini: ${prefs.cityName}` : 'Belum ada kota dipilih.'}</p>
           <CityPicker currentId={prefs.cityId} onPicked={() => toast.show('Kota disimpan')} />
-          <SwitchRow label="Putar adzan saat masuk waktu" description="Hanya selama iMuslim terbuka." checked={prefs.adzanEnabled} disabled={!prefs.cityId} onChange={(v) => set({ adzanEnabled: v })} />
+          <SwitchRow label="Putar adzan saat masuk waktu" description="Diputar saat iMuslim terbuka. Agar tetap diingatkan saat ditutup, nyalakan notifikasi di halaman Jadwal Sholat." checked={prefs.adzanEnabled} disabled={!prefs.cityId} onChange={(v) => set({ adzanEnabled: v })} />
           <SwitchRow label="Peringatan imsak" checked={prefs.imsakAlert} disabled={!prefs.cityId} onChange={(v) => set({ imsakAlert: v })} />
           <Link to="/sholat" className="section__link" style={{ marginTop: 8 }}>
-            Notifikasi & contoh audio ada di halaman Jadwal Sholat
+            Notifikasi (juga saat iMuslim ditutup) & contoh audio ada di halaman Jadwal Sholat
           </Link>
         </Section>
 

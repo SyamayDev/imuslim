@@ -40,6 +40,7 @@ Al-Qur'an dengan audio & tafsir · Jadwal sholat & imsakiyah · Doa & dzikir · 
 - [Arsitektur](#arsitektur)
 - [Sumber data & API](#sumber-data--api)
 - [Desain, corak & animasi](#desain-corak--animasi)
+- [Notifikasi saat iMuslim ditutup (Web Push)](#notifikasi-saat-imuslim-ditutup-web-push)
 - [Kualitas: aksesibilitas, tes, Lighthouse](#kualitas-aksesibilitas-tes-lighthouse)
 - [Film motion graphic](#film-motion-graphic)
 - [Privasi](#privasi)
@@ -98,7 +99,7 @@ iMuslim adalah aplikasi web (PWA) untuk ibadah harian dalam Bahasa Indonesia, di
 |---|---|
 | **Beranda** | Sapaan sesuai waktu, tanggal Masehi + Hijriah, kartu waktu sholat berikutnya dengan cincin progres & hitung mundur, *lanjutkan membaca*, acara hari ini, ayat & hadits hari ini (dari API), rekomendasi kajian |
 | **Al-Qur'an** | 114 surah, cari nama/arti/nomor/teks Arab, pencarian suara, pintasan `2:255`, favorit, paginasi · kepala surah bergaya mushaf · teks Arab, latin, terjemahan Kemenag, tafsir per ayat · murattal satu surah atau per ayat (berlanjut otomatis) dengan 6 qari · tandai terakhir dibaca, simpan ayat, salin, bagikan · ukuran huruf Arab · surah panjang dirender bertahap agar tetap ringan |
-| **Jadwal sholat** | 517 dari 518 kota/kabupaten (satu kota tidak punya data di sumber), pencarian kota, *Gunakan lokasi saya* (opsional), jadwal hari ini dengan status & hitung mundur, tabel imsakiyah bulanan dengan kolom Hijriah, zona WIB/WITA/WIT, pengingat adzan & notifikasi opsional |
+| **Jadwal sholat** | 517 dari 518 kota/kabupaten (satu kota tidak punya data di sumber), pencarian kota, *Gunakan lokasi saya* (opsional), jadwal hari ini dengan status & hitung mundur, tabel imsakiyah bulanan dengan kolom Hijriah, zona WIB/WITA/WIT, adzan tepat waktu saat iMuslim terbuka, **notifikasi tepat waktu walau iMuslim ditutup** (Web Push; ketuk untuk memutar adzan) |
 | **Doa & dzikir** | Dua koleksi: 227 doa equran.id (dengan latin & dalil) dan 108 doa myQuran · cari, filter kategori, paginasi, simpan, salin, bagikan |
 | **Hadits** | 9 kitab (Bukhari, Muslim, Abu Dawud, Tirmidzi, Nasai, Ibnu Majah, Ahmad, Malik, Darimi) + Arbain An-Nawawi · paginasi, lompat ke nomor, simpan, salin, bagikan |
 | **Kalender** | Masehi & Hijriah berdampingan, navigasi bulan/tahun & keyboard, hari besar Islam (perkiraan), acara pribadi (tambah/ubah/hapus/bagikan), pembanding tanggal myQuran |
@@ -185,7 +186,8 @@ src/
   hooks/           useResource, useNow, useHydrated/useClientValue, useFullscreen, useShare, useSpeechSearch…
   utils/           hijri, kiblat, zakat, waktu sholat, format, teks aman, validator
   styles/          token warna, dasar, komponen, tata letak, ornamen & animasi
-public/            brand/, icons/, audio/ (adzan), manifest.webmanifest, sw.js
+public/            brand/, icons/, audio/ (adzan), manifest.webmanifest, sw.js (cache + push)
+api/               Vercel Functions: notifikasi push (config, subscription, test, fire, plan)
 scripts/           site-config, postbuild (prerender), serve-dist, lighthouse, screenshots, brand, gh-pages-prepare
 e2e/               tes Playwright
 legacy/            arsip situs lama (tidak di-deploy)
@@ -284,6 +286,58 @@ Semua endpoint diuji pada **24 Oktober 2026** (status HTTP, CORS, bentuk JSON, e
 - **Tipografi:** Plus Jakarta Sans (UI, karya foundry Indonesia Tokotype), Fraunces (judul), Amiri Quran (teks Arab). Semuanya di-host sendiri, dan hanya subset yang dibutuhkan.
 - **Tema:** awalnya mengikuti perangkat; satu tombol (bulan/matahari) beralih terang ↔ gelap dan pilihan itu diingat. Tema dipasang sebelum cat pertama, jadi tidak ada kedipan.
 
+## Notifikasi saat iMuslim ditutup (Web Push)
+
+Browser tidak mengizinkan situs, termasuk PWA yang dipasang, memutar audio sendiri saat ditutup. Karena itu pengingat berjalan dalam dua mode:
+
+| Kondisi | Yang terjadi |
+|---|---|
+| iMuslim terbuka | Adzan diputar tepat waktu oleh halaman (`PrayerAlarm`). |
+| iMuslim ditutup / HP terkunci | Server mengirim **notifikasi push tepat di menit waktu sholat**. HP berbunyi dengan suara notifikasi. Mengetuk notifikasi atau tombol **Putar adzan** membuka iMuslim dan memutar adzan. |
+
+Di Android, suara notifikasi iMuslim bisa diganti dengan file adzan (panduannya ada di halaman Jadwal Sholat) agar adzan langsung terdengar. Di iPhone, Web Push hanya untuk iMuslim yang dipasang ke Layar Utama (iOS 16.4+).
+
+```mermaid
+flowchart LR
+  A[Pengguna menyalakan notifikasi] -->|langganan push + ID kota| S["api/push/subscription"]
+  S --> R[(Upstash Redis)]
+  S -->|jadwal hari ini & besok| Q[Upstash QStash<br/>pesan terjadwal per waktu sholat]
+  C["Vercel Cron harian<br/>api/push/plan"] --> Q
+  Q -->|tepat di menitnya, bertanda tangan| F["api/push/fire"]
+  F -->|Web Push VAPID, urgensi tinggi| P[Layanan push browser]
+  P --> W[Service worker → notifikasi]
+  W -->|diketuk| App[iMuslim terbuka & memutar adzan]
+```
+
+- **Kode:** `api/` (Vercel Functions) dan klien di `src/features/sholat/push.js`, `usePushSync.js`, `PrayerAlarm.jsx`, serta handler `push`/`notificationclick` di `public/sw.js`.
+- **Data jadwal** di server sama dengan aplikasi (myQuran + `mapSchedule`). Setiap pesan "fire" juga menjadwalkan ulang hari ini & besok, sehingga rantainya tetap jalan walau cron harian terlewat.
+- **Keamanan:**
+  - endpoint `fire` hanya menerima permintaan bertanda tangan QStash;
+  - endpoint `plan` dilindungi `CRON_SECRET`;
+  - alamat langganan hanya boleh mengarah ke layanan push resmi (FCM, Mozilla, Apple, Windows);
+  - CORS dibatasi ke domain iMuslim;
+  - kunci rahasia hanya ada di environment Vercel.
+
+### Menyiapkan server (sekali saja)
+
+1. Di Vercel → proyek **imuslim** → **Storage/Marketplace**, tambahkan **Upstash for Redis** dan **Upstash QStash** (paket gratis cukup), lalu hubungkan ke proyek. Variabel `KV_REST_API_URL`, `KV_REST_API_TOKEN`, `QSTASH_TOKEN`, `QSTASH_CURRENT_SIGNING_KEY`, dan `QSTASH_NEXT_SIGNING_KEY` akan terisi otomatis. Alternatifnya, buat database & QStash di console Upstash lalu salin nilainya sendiri. Nama `UPSTASH_REDIS_REST_URL`/`_TOKEN` juga dikenali.
+2. Tambahkan variabel lingkungan berikut (Production):
+   - `VAPID_PUBLIC_KEY` dan `VAPID_PRIVATE_KEY`, dari `npx web-push generate-vapid-keys`;
+   - `CRON_SECRET`, string acak panjang;
+   - opsional `VAPID_SUBJECT`, bawaannya URL situs.
+3. Redeploy. `GET https://imuslim-seven.vercel.app/api/push/config/` harus menjawab `{"enabled":true,...}`. Selama belum siap, aplikasi menampilkan status jujur "Server notifikasi belum aktif" dan pengingat tetap berjalan saat iMuslim terbuka.
+
+Versi GitHub Pages memakai API yang sama (lintas-origin ke domain Vercel).
+
+**Pengujian:**
+- `npm test` mencakup verifikasi tanda tangan QStash, validasi langganan, CORS, dan penjadwalan per kota.
+- `node scripts/push-e2e.mjs` (setelah `PUSH_API_URL=http://localhost:4199/api npm run build`) mengirim **Web Push sungguhan** ke Chrome lewat server API lokal (Redis & QStash tiruan). Skrip ini memeriksa langganan → jadwal → notifikasi diterima service worker → notifikasi uji → membuka dari notifikasi → berhenti langganan.
+
+**Batasan:**
+- Bunyi saat ditutup adalah suara notifikasi perangkat. Adzan penuh baru diputar setelah notifikasi diketuk; bila browser memblokir pemutaran otomatis, iMuslim menampilkan tombol **Putar adzan**.
+- Penghemat baterai HP yang agresif bisa menunda notifikasi.
+- Setiap kota yang punya pelanggan memakai ±5–6 pesan QStash per hari, jadi perhatikan kuota harian paket gratis Upstash.
+
 ## Kualitas: aksesibilitas, tes, Lighthouse
 
 **Aksesibilitas:**
@@ -341,6 +395,7 @@ Cara render ulang, daftar aset beserta lisensinya, dan hasil ukur ada di [`motio
 - Lokasi hanya diminta saat tombol ditekan:
   - untuk jadwal sholat, koordinat dikirim ke Nominatim hanya untuk mengetahui nama kota dan tidak disimpan;
   - untuk kiblat, koordinat disimpan di perangkat agar tidak perlu diminta ulang.
+- Satu-satunya data di server: bila **Notifikasi walau iMuslim ditutup** dinyalakan, server (Vercel + Upstash Redis) menyimpan alamat langganan push browser, ID kota, dan pilihan adzan/imsak. Data itu dipakai hanya untuk mengirim pengingat, dan dihapus saat notifikasi dimatikan atau langganannya kedaluwarsa.
 
 ## Migrasi dari versi lama
 

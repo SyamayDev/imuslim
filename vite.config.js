@@ -15,6 +15,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       __BUILD_DATE__: JSON.stringify(new Date().toISOString()),
       __SITE_URL__: JSON.stringify(site.url),
       __REPO_URL__: JSON.stringify(REPO_URL),
+      __PUSH_API__: JSON.stringify(site.pushApi),
     },
     build: {
       target: 'es2020',
@@ -46,7 +47,7 @@ export default defineConfig(({ mode, isSsrBuild }) => {
       environment: 'jsdom',
       globals: true,
       setupFiles: ['./src/test/setup.js'],
-      include: ['src/**/*.test.{js,jsx}'],
+      include: ['src/**/*.test.{js,jsx}', 'api/**/*.test.js'],
       css: false,
       restoreMocks: true,
     },

@@ -13,7 +13,7 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: { ...globals.browser, __APP_VERSION__: 'readonly', __BUILD_DATE__: 'readonly', __SITE_URL__: 'readonly', __REPO_URL__: 'readonly' },
+      globals: { ...globals.browser, __APP_VERSION__: 'readonly', __BUILD_DATE__: 'readonly', __SITE_URL__: 'readonly', __REPO_URL__: 'readonly', __PUSH_API__: 'readonly' },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     plugins: {
@@ -42,6 +42,15 @@ export default [
     files: ['src/**/*.test.{js,jsx}', 'src/test/**'],
     languageOptions: { globals: { ...globals.browser, ...globals.node, ...globals.vitest } },
     rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
+    // Vercel Functions (Node.js)
+    files: ['api/**/*.js'],
+    languageOptions: { ecmaVersion: 'latest', sourceType: 'module', globals: { ...globals.node } },
+  },
+  {
+    files: ['api/**/*.test.js'],
+    languageOptions: { globals: { ...globals.node, ...globals.vitest } },
   },
   {
     files: ['scripts/**/*.mjs', 'e2e/**/*.js', '*.config.js', 'public/sw.js'],

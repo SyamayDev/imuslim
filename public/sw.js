@@ -1,4 +1,6 @@
 /* iMuslim service worker
+ * - Push: notifikasi waktu sholat dari server walau iMuslim ditutup; mengetuknya membuka
+ *   iMuslim dan memutar adzan (service worker sendiri tidak bisa memutar audio).
  * - Navigasi: network-first; HTML prerender disimpan per URL (maks. 40) untuk offline.
  * - Aset ber-hash (/assets/*): cache-first (nama file berubah tiap build).
  * - Ikon/font/manifest: stale-while-revalidate.
@@ -98,5 +100,50 @@ self.addEventListener('fetch', (event) => {
         return hit || network;
       }),
     ),
+  );
+});
+
+/* ---------- Notifikasi push (pengingat waktu sholat) ---------- */
+self.addEventListener('push', (event) => {
+  let data;
+  try {
+    data = event.data ? event.data.json() : {};
+  } catch {
+    data = { title: 'iMuslim', body: event.data ? event.data.text() : '' };
+  }
+  const prayer = data.type === 'prayer';
+  const options = {
+    body: data.body || '',
+    icon: `${SCOPE}icons/icon-192.png`,
+    badge: `${SCOPE}icons/badge-96.png`,
+    tag: data.tag || 'imuslim',
+    renotify: true,
+    requireInteraction: prayer,
+    vibrate: prayer ? [500, 250, 500, 250, 900] : [200],
+    timestamp: data.at || Date.now(),
+    data: { url: new URL(data.url || '', self.registration.scope).href, key: data.key || null, at: data.at || null, type: data.type || 'info' },
+    actions: prayer ? [{ action: 'play', title: data.key === 'imsak' ? 'Putar pengumuman' : 'Putar adzan' }, { action: 'dismiss', title: 'Tutup' }] : [],
+  };
+  event.waitUntil(self.registration.showNotification(data.title || 'iMuslim', options));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  if (event.action === 'dismiss') return;
+  const { url, key, at, type } = event.notification.data || {};
+  event.waitUntil(
+    (async () => {
+      const all = await self.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      const mine = all.filter((c) => c.url.startsWith(self.registration.scope));
+      const client = mine.find((c) => c.focused) || mine[0];
+      if (client) {
+        // iMuslim sudah terbuka: fokuskan & minta halaman memutar adzan.
+        await client.focus();
+        if (type === 'prayer') client.postMessage({ type: 'imuslim:adzan', key, at });
+        return;
+      }
+      // Tertutup: buka iMuslim dengan parameter adzan; halaman memutar audionya saat dimuat.
+      if (url) await self.clients.openWindow(url);
+    })(),
   );
 });

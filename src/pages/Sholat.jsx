@@ -1,4 +1,4 @@
-import { BellRing, CalendarRange, ChevronLeft, ChevronRight, Clock, Pause, Play, Sunrise, Volume2 } from 'lucide-react';
+import { BellRing, CalendarRange, ChevronLeft, ChevronRight, Clock, Pause, Play, RotateCw, Send, Sunrise, Volume2 } from 'lucide-react';
 import { useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useAudioControls, useAudioState } from '../app/audio.jsx';
@@ -9,6 +9,8 @@ import { DataNotice, EmptyState, ErrorState, LoadingBlock } from '../components/
 import { SwitchRow } from '../components/ui/Switch.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { CityPicker } from '../features/sholat/CityPicker.jsx';
+import { isIosBrowserTab, pushSupported, sendTestPush } from '../features/sholat/push.js';
+import { pushWant, runPushSync, usePushStatus } from '../features/sholat/usePushSync.js';
 import { useMonthSchedule, useTodayPrayer } from '../features/sholat/usePrayerTimes.js';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 import { useClientValue } from '../hooks/useHydrated.js';
@@ -247,6 +249,30 @@ function MonthView({ cityId, offset }) {
 }
 
 const notificationsSupported = () => 'Notification' in window;
+const iosTab = () => isIosBrowserTab();
+
+/** Teks status notifikasi saat iMuslim ditutup (jujur soal apa yang sedang terjadi). */
+function pushStatusText(status, { prefs, supported, ios }) {
+  if (!prefs.adzanNotify) return null;
+  if (ios) return { tone: 'warn', text: 'Di iPhone/iPad, pasang iMuslim ke Layar Utama dulu (Bagikan → Tambah ke Layar Utama), lalu nyalakan dari aplikasi itu.' };
+  if (!supported) return { tone: 'warn', text: 'Browser ini belum mendukung notifikasi saat ditutup. Pengingat tetap berjalan selama iMuslim terbuka.' };
+  if (!prefs.adzanEnabled && !prefs.imsakAlert) return { tone: 'warn', text: 'Nyalakan adzan atau imsak di atas agar ada pengingat yang dikirim.' };
+  switch (status.state) {
+    case 'active':
+      return { tone: 'ok', text: `Aktif untuk ${prefs.cityName}. Server iMuslim mengirim notifikasi tepat waktu walau aplikasi ditutup.` };
+    case 'syncing':
+    case 'idle':
+      return { tone: 'muted', text: 'Menyambungkan ke server notifikasi…' };
+    case 'server-off':
+      return { tone: 'warn', text: 'Server notifikasi belum aktif. Pengingat tetap berjalan selama iMuslim terbuka.' };
+    case 'no-permission':
+      return { tone: 'warn', text: 'Izin notifikasi belum diberikan. Aktifkan dari pengaturan situs browser.' };
+    case 'error':
+      return { tone: 'error', text: `Gagal menyambungkan: ${status.error}` };
+    default:
+      return null;
+  }
+}
 
 function AdzanSettings({ prefs }) {
   const toast = useToast();
@@ -254,6 +280,10 @@ function AdzanSettings({ prefs }) {
   const audioState = useAudioState();
   const set = (patch) => prefsStore.set((p) => ({ ...p, ...patch }));
   const notifSupported = useClientValue(notificationsSupported, false);
+  const supported = useClientValue(pushSupported, false);
+  const ios = useClientValue(iosTab, false);
+  const pushStatus = usePushStatus();
+  const [testing, setTesting] = useState(false);
   const previewKey = audioState.queue?.kind === 'adzan' && audioState.queue.id.startsWith('preview') ? audioState.queue.id : null;
 
   const preview = (id, src, title) => {
@@ -262,14 +292,41 @@ function AdzanSettings({ prefs }) {
   };
 
   const toggleNotify = async (on) => {
-    if (!on) return set({ adzanNotify: false });
+    if (!on) {
+      set({ adzanNotify: false });
+      runPushSync(null);
+      return undefined;
+    }
     if (!notifSupported) return toast.show('Browser ini tidak mendukung notifikasi.', { type: 'error' });
     let perm = Notification.permission;
     if (perm === 'default') perm = await Notification.requestPermission();
-    if (perm === 'granted') set({ adzanNotify: true });
-    else toast.show('Izin notifikasi ditolak. Aktifkan dari pengaturan situs browser bila ingin memakainya.', { type: 'error', duration: 4200 });
+    if (perm !== 'granted') {
+      toast.show('Izin notifikasi ditolak. Aktifkan dari pengaturan situs browser bila ingin memakainya.', { type: 'error', duration: 4200 });
+      return undefined;
+    }
+    set({ adzanNotify: true });
+    const want = pushWant({ ...prefs, adzanNotify: true });
+    if (want && supported && !ios && import.meta.env.PROD) {
+      const r = await runPushSync(want, { force: true });
+      if (r.state === 'active') toast.show('Notifikasi aktif, juga saat iMuslim ditutup.');
+      else if (r.state === 'error') toast.show(`Notifikasi saat ditutup gagal diaktifkan: ${r.error}`, { type: 'error', duration: 5000 });
+    }
     return undefined;
   };
+
+  const sendTest = async () => {
+    setTesting(true);
+    try {
+      await sendTestPush();
+      toast.show('Notifikasi uji dikirim. Coba juga dengan iMuslim ditutup.');
+    } catch (error) {
+      toast.show(error.message || 'Notifikasi uji gagal dikirim.', { type: 'error', duration: 4500 });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const status = pushStatusText(pushStatus, { prefs, supported, ios });
 
   return (
     <section className="panel sholat-adzan" aria-labelledby="adzan-title">
@@ -277,7 +334,8 @@ function AdzanSettings({ prefs }) {
         <BellRing aria-hidden="true" /> Pengingat & adzan
       </h2>
       <p className="muted" style={{ fontSize: 'var(--fs-sm)', marginTop: 4 }}>
-        Tidak ada audio yang diputar otomatis kecuali Anda menyalakannya. Pengingat hanya bekerja selama iMuslim terbuka di browser.
+        Saat iMuslim terbuka, adzan diputar tepat waktu. Saat ditutup, iMuslim mengirim notifikasi berbunyi; ketuk notifikasinya untuk memutar adzan. Browser tidak mengizinkan
+        situs memutar audio sendiri saat ditutup.
       </p>
       <SwitchRow
         label="Putar adzan saat masuk waktu sholat"
@@ -288,12 +346,49 @@ function AdzanSettings({ prefs }) {
       />
       <SwitchRow label="Peringatan waktu imsak" description="Memutar pengumuman singkat saat imsak (berguna saat Ramadan)." checked={prefs.imsakAlert} disabled={!prefs.cityId} onChange={(v) => set({ imsakAlert: v })} />
       <SwitchRow
-        label="Tampilkan notifikasi"
-        description={notifSupported ? 'Meminta izin notifikasi browser saat dinyalakan.' : 'Tidak didukung di browser ini.'}
+        label="Notifikasi walau iMuslim ditutup"
+        description={notifSupported ? 'Notifikasi tepat waktu dengan suara notifikasi perangkat. Meminta izin notifikasi saat dinyalakan.' : 'Tidak didukung di browser ini.'}
         checked={prefs.adzanNotify}
         disabled={!notifSupported || !prefs.cityId}
         onChange={toggleNotify}
       />
+      {status && (
+        <div className={`push-status push-status--${status.tone}`} role="status">
+          <span>{status.text}</span>
+          {status.tone === 'error' && (
+            <button type="button" className="btn btn--sm" onClick={() => runPushSync(pushWant(prefs), { force: true })}>
+              <RotateCw aria-hidden="true" /> Coba lagi
+            </button>
+          )}
+          {pushStatus.state === 'active' && (
+            <button type="button" className="btn btn--sm" onClick={sendTest} disabled={testing} aria-busy={testing}>
+              <Send aria-hidden="true" /> {testing ? 'Mengirim…' : 'Kirim notifikasi uji'}
+            </button>
+          )}
+        </div>
+      )}
+      {prefs.adzanNotify && (
+        <details className="push-tips">
+          <summary>Agar suara adzan langsung terdengar dari notifikasi (Android)</summary>
+          <ol>
+            <li>
+              Unduh file adzan:{' '}
+              <a href={ADZAN_AUDIO.default} download="adzan-imuslim.mp3">
+                adzan
+              </a>{' '}
+              ·{' '}
+              <a href={ADZAN_AUDIO.subuh} download="adzan-subuh-imuslim.mp3">
+                adzan Subuh
+              </a>
+              .
+            </li>
+            <li>Buka Pengaturan HP → Aplikasi → iMuslim (atau Chrome bila iMuslim belum dipasang) → Notifikasi.</li>
+            <li>Pilih kategori notifikasi iMuslim → Suara → pilih file adzan yang tadi diunduh.</li>
+            <li>Agar tidak tertunda, matikan pengoptimalan/penghemat baterai untuk iMuslim atau Chrome.</li>
+          </ol>
+          <p className="muted">Nama menu berbeda di tiap merek HP, dan sebagian HP tidak mengizinkan suara khusus per aplikasi. iPhone memakai suara notifikasi bawaan.</p>
+        </details>
+      )}
       <div className="adzan-preview">
         <span className="field__label">
           <Volume2 aria-hidden="true" width={16} height={16} /> Dengarkan contoh

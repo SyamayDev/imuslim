@@ -100,6 +100,9 @@ const fullBleed = (pad) =>
   `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="512" height="512"><rect width="64" height="64" fill="${COLORS.forest}"/><g transform="translate(${pad} ${pad}) scale(${(64 - pad * 2) / 64})"><path d="${MARK_PATHS.arch}" fill="none" stroke="${COLORS.ivory}" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/><path d="${crescentPath()}" fill="${COLORS.gold}"/><path d="${MARK_PATHS.stem}" stroke="${COLORS.ivory}" stroke-width="3.8" stroke-linecap="round"/><path d="${MARK_PATHS.book}" fill="none" stroke="${COLORS.gold}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
 await png(fullBleed(4), 180, pub('icons/apple-touch-icon.png'));
 await png(fullBleed(9), 512, pub('icons/maskable-512.png'));
+// Badge notifikasi Android: siluet putih di latar transparan (sistem hanya memakai kanal alfa).
+const badge = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="96" height="96"><g transform="translate(2 2) scale(0.9375)"><path d="${MARK_PATHS.arch}" fill="none" stroke="#fff" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round"/><path d="${crescentPath()}" fill="#fff"/><path d="${MARK_PATHS.stem}" stroke="#fff" stroke-width="4.8" stroke-linecap="round"/><path d="${MARK_PATHS.book}" fill="none" stroke="#fff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round"/></g></svg>`;
+await png(badge, 96, pub('icons/badge-96.png'));
 
 // ---------- Open Graph ----------
 const og = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">

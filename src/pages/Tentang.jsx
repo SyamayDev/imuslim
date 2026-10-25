@@ -157,6 +157,10 @@ export default function Tentang() {
             Bookmark, pengaturan, dan acara disimpan di localStorage perangkat Anda. Lokasi hanya diminta saat tombol ditekan, tidak disimpan di server mana pun, dan untuk kiblat koordinat
             disimpan di perangkat agar tidak perlu meminta ulang. Tidak ada analitik atau cookie pelacak.
           </p>
+          <p className="muted">
+            Bila Anda menyalakan “Notifikasi walau iMuslim ditutup”, server iMuslim (Vercel) menyimpan alamat langganan notifikasi browser Anda beserta ID kota dan pilihan
+            adzan/imsak—hanya untuk mengirim pengingat tepat waktu. Tidak ada nama, lokasi, atau data lain. Data itu dihapus saat notifikasinya dimatikan.
+          </p>
         </article>
       </section>
 

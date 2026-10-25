@@ -23,6 +23,12 @@
       "destination": "/404.html"
     }
   ],
+  "crons": [
+    {
+      "path": "/api/push/plan/",
+      "schedule": "5 16 * * *"
+    }
+  ],
   "git": {
     "deploymentEnabled": {
       "gh-pages": false
