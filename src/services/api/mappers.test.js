@@ -11,6 +11,7 @@ import arbain from '../../test/fixtures/myquran-arbain.json';
 import myqDoa from '../../test/fixtures/myquran-doa.json';
 import bukhari1 from '../../test/fixtures/myquran-hadits-bukhari-1.json';
 import hijr from '../../test/fixtures/myquran-hijr-2026-10-24.json';
+import jadwalAceh from '../../test/fixtures/myquran-jadwal-0105-2026-10.json';
 import jadwal from '../../test/fixtures/myquran-jadwal-1301-2026-10.json';
 import kota from '../../test/fixtures/myquran-kota.json';
 import { mapEquranDoaList, mapMyquranDoaList } from './doa.js';
@@ -104,6 +105,15 @@ describe('jadwal sholat', () => {
     expect(s.days).toHaveLength(31);
     expect(s.timezone).toBe('WIB');
     expect(s.days[0].times.subuh).toMatch(/^\d{2}:\d{2}$/);
+  });
+  it('ID kota berawalan nol (Sumatra) tetap cocok walau API mengirim angka', () => {
+    expect(jadwalAceh.data.id).toBe(105);
+    const s = mapSchedule(jadwalAceh, '0105', 2026, 10);
+    expect(s.cityId).toBe('0105');
+    expect(s.city).toBe('KAB. ACEH SELATAN');
+    expect(s.timezone).toBe('WIB');
+    expect(s.days).toHaveLength(31);
+    expect(() => mapSchedule(jadwalAceh, '0106', 2026, 10)).toThrow(/tidak cocok/);
   });
   it('jadwal dengan format waktu rusak ditolak', () => {
     const broken = clone(jadwal);

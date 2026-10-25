@@ -12,7 +12,6 @@ export function ThemeToggle({ className = 'icon-btn', withLabel = false }) {
   const current = useResolvedTheme();
   const next = current === 'dark' ? 'light' : 'dark';
   const label = next === 'dark' ? 'Aktifkan mode gelap' : 'Aktifkan mode terang';
-  const Icon = current === 'dark' ? Sun : Moon;
   // Animasi ikon hanya setelah ditekan, bukan saat halaman dimuat.
   const [swapped, setSwapped] = useState(false);
   return (
@@ -26,7 +25,11 @@ export function ThemeToggle({ className = 'icon-btn', withLabel = false }) {
       aria-label={withLabel ? undefined : label}
       title={label}
     >
-      <Icon key={current} className="theme-toggle__icon" aria-hidden="true" />
+      {/* Ikon dipilih lewat CSS dari <html data-theme> → benar sejak cat pertama (sebelum JS). */}
+      <span key={current} className="theme-toggle__icon" aria-hidden="true">
+        <Moon className="theme-toggle__moon" />
+        <Sun className="theme-toggle__sun" />
+      </span>
       {withLabel && <span>{next === 'dark' ? 'Mode gelap' : 'Mode terang'}</span>}
     </button>
   );

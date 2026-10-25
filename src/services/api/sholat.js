@@ -32,7 +32,8 @@ export function mapSchedule(json, cityId, year, month) {
   if (json && json.status === false) throw new ApiError(ERROR_KIND.NOT_FOUND, 'Jadwal untuk kota ini tidak ditemukan');
   assert(json && json.status === true && json.data && Array.isArray(json.data.jadwal), 'Respons jadwal tidak valid');
   const d = json.data;
-  assert(String(d.id) === String(cityId), 'ID kota pada respons tidak cocok');
+  // API mengirim ID sebagai angka sehingga nol di depan hilang ("0105" → 105).
+  assert(Number(d.id) === Number(cityId), 'ID kota pada respons tidak cocok');
   const prefix = `${year}-${String(month).padStart(2, '0')}-`;
   const days = d.jadwal.map((day) => {
     assert(typeof day.date === 'string' && DATE_RE.test(day.date) && day.date.startsWith(prefix), 'Tanggal jadwal tidak valid');
@@ -45,10 +46,10 @@ export function mapSchedule(json, cityId, year, month) {
   });
   assert(days.length >= 28 && days.length <= 31, 'Jumlah hari dalam jadwal bulanan tidak wajar');
   return {
-    cityId: String(d.id),
+    cityId: String(cityId),
     city: String(d.lokasi ?? '').trim(),
     region: String(d.daerah ?? '').trim(),
-    timezone: timezoneForCity(String(d.id), d.daerah),
+    timezone: timezoneForCity(String(cityId), d.daerah),
     year,
     month,
     days,

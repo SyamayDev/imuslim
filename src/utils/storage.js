@@ -83,14 +83,14 @@ export function createStore(key, { defaultValue, validate }) {
   return { key, get, set, subscribe, reload, reset: () => set(defaultValue), defaultValue };
 }
 
+/**
+ * Nilai store yang selalu sinkron. Saat prerender & hydration dipakai nilai bawaan
+ * (HTML statis tidak tahu isi localStorage pengguna); sesaat setelah hydration React
+ * otomatis merender ulang dengan nilai sebenarnya.
+ */
 export function useStore(store) {
-  return useSyncExternalStore(store.subscribe, store.get, store.get);
+  return useSyncExternalStore(store.subscribe, store.get, () => store.defaultValue);
 }
 
 // ---------- Validator kecil ----------
-export const isObj = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
-export const str = (v, max = 500) => (typeof v === 'string' ? v.slice(0, max) : '');
-export const int = (v, min, max) => {
-  const n = Number(v);
-  return Number.isInteger(n) && n >= min && n <= max ? n : null;
-};
+export { int, isObj, str } from './validate.js';

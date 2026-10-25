@@ -13,7 +13,7 @@ export default [
     languageOptions: {
       ecmaVersion: 'latest',
       sourceType: 'module',
-      globals: { ...globals.browser, __APP_VERSION__: 'readonly', __BUILD_DATE__: 'readonly' },
+      globals: { ...globals.browser, __APP_VERSION__: 'readonly', __BUILD_DATE__: 'readonly', __SITE_URL__: 'readonly', __REPO_URL__: 'readonly' },
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
     plugins: {
@@ -32,6 +32,11 @@ export default [
     // Modul konteks (Provider + hook) memang mengekspor komponen dan hook bersamaan.
     files: ['src/app/audio.jsx', 'src/components/ui/Toast.jsx'],
     rules: { 'react-refresh/only-export-components': 'off' },
+  },
+  {
+    // Entry prerender berjalan di Node saat build.
+    files: ['src/entry-server.jsx'],
+    languageOptions: { globals: { ...globals.browser, ...globals.node } },
   },
   {
     files: ['src/**/*.test.{js,jsx}', 'src/test/**'],

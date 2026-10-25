@@ -8,12 +8,13 @@ import { fileURLToPath } from 'node:url';
 import * as chromeLauncher from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 import desktopConfig from 'lighthouse/core/config/desktop-config.js';
+import { resolveSite } from './site-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const outDir = resolve(root, 'reports/lighthouse');
 const PORT = 4321;
-const BASE = `http://localhost:${PORT}/muslimweb`;
-const routes = process.argv.slice(2).length ? process.argv.slice(2) : ['/', '/quran/', '/quran/1/', '/sholat/', '/doa/', '/hadits/', '/kalender/', '/kiblat/', '/zakat/'];
+const BASE = `http://localhost:${PORT}${resolveSite().base.replace(/\/$/, '')}`;
+const routes = process.argv.slice(2).length ? process.argv.slice(2) : ['/', '/quran/', '/quran/1/', '/sholat/', '/doa/', '/hadits/', '/kalender/', '/kiblat/', '/zakat/', '/pengaturan/', '/tentang/'];
 const CATEGORIES = ['performance', 'accessibility', 'best-practices', 'seo'];
 
 await mkdir(outDir, { recursive: true });
@@ -38,6 +39,7 @@ try {
         .map((a) => `${a.id} (${a.displayValue ?? a.score})`);
       const metrics = {
         FCP: lhr.audits['first-contentful-paint']?.displayValue,
+        SI: lhr.audits['speed-index']?.displayValue,
         LCP: lhr.audits['largest-contentful-paint']?.displayValue,
         TBT: lhr.audits['total-blocking-time']?.displayValue,
         CLS: lhr.audits['cumulative-layout-shift']?.displayValue,

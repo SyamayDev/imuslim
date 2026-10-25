@@ -11,6 +11,7 @@ import { useToast } from '../components/ui/Toast.jsx';
 import { CityPicker } from '../features/sholat/CityPicker.jsx';
 import { useMonthSchedule, useTodayPrayer } from '../features/sholat/usePrayerTimes.js';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
+import { useClientValue } from '../hooks/useHydrated.js';
 import { useNow } from '../hooks/useNow.js';
 import { DAY_NAMES, formatLongDate, MONTH_NAMES } from '../utils/format.js';
 import { formatHijri, toHijri } from '../utils/hijri.js';
@@ -245,12 +246,14 @@ function MonthView({ cityId, offset }) {
   );
 }
 
+const notificationsSupported = () => 'Notification' in window;
+
 function AdzanSettings({ prefs }) {
   const toast = useToast();
   const audio = useAudioControls();
   const audioState = useAudioState();
   const set = (patch) => prefsStore.set((p) => ({ ...p, ...patch }));
-  const notifSupported = typeof window !== 'undefined' && 'Notification' in window;
+  const notifSupported = useClientValue(notificationsSupported, false);
   const previewKey = audioState.queue?.kind === 'adzan' && audioState.queue.id.startsWith('preview') ? audioState.queue.id : null;
 
   const preview = (id, src, title) => {

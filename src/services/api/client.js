@@ -65,7 +65,13 @@ function rawFetchJson(url, timeout) {
       }
       if (!res.ok) {
         const retryAfter = Number(res.headers.get('retry-after')) || null;
-        throw new ApiError(classifyStatus(res.status), `HTTP ${res.status}`, { status: res.status, url, retryAfter });
+        let kind = classifyStatus(res.status);
+        // Beberapa API (mis. myQuran) menjawab "data tidak ada" dengan HTTP 400 + {status:false}.
+        if (kind === ERROR_KIND.HTTP) {
+          const body = await res.json().catch(() => null);
+          if (body && body.status === false && /not\s*found|tidak\s*ditemukan/i.test(String(body.message ?? ''))) kind = ERROR_KIND.NOT_FOUND;
+        }
+        throw new ApiError(kind, `HTTP ${res.status}`, { status: res.status, url, retryAfter });
       }
       try {
         return await res.json();

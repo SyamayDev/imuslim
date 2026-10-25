@@ -1,22 +1,26 @@
-// Langkah pasca-build untuk GitHub Pages (static hosting tanpa rewrite SPA):
-//  1. Salin index.html ke setiap route statis (/quran/index.html, /sholat/index.html, …)
-//     dengan <title>, deskripsi, canonical, dan og:url yang sesuai → route bisa dibuka
-//     langsung & di-refresh dengan status HTTP 200.
-//  2. Prerender judul untuk 114 halaman surah (/quran/1 … /quran/114).
-//  3. 404.html = salinan aplikasi (noindex) untuk route dinamis lain (doa/hadits detail)
-//     dan alamat yang memang tidak ada — router menampilkan halaman yang tepat.
-//  4. Alamat lama (jadwalsholatdanimsakiah, hadist, kalkulatorzakat, setting) tetap 200
-//     lalu dialihkan di klien, canonical menunjuk ke alamat baru.
-//  5. sitemap.xml, robots.txt, .nojekyll, dan BUILD_ID untuk service worker.
+// Langkah pasca-build (berlaku untuk GitHub Pages /imuslim/ maupun Vercel /):
+//  1. Prerender setiap route statis menjadi HTML utuh (React 19 prerender, lihat
+//     src/entry-server.jsx) dengan <title>, deskripsi, canonical, dan og:url masing-masing.
+//     Halaman langsung tampil sebelum JavaScript selesai dimuat, lalu di-hydrate.
+//  2. CSS aplikasi di-inline → cat pertama tidak menunggu request apa pun selain HTML.
+//  3. Preload font & modul halaman per route.
+//  4. Route dinamis yang jumlahnya stabil (114 surah, kitab hadits, Arbain, doa) juga
+//     diprerender sehingga berstatus 200 saat dibuka langsung/di-refresh.
+//  5. 404.html = aplikasi tanpa prerender (noindex) untuk alamat lain; router klien
+//     menampilkan halaman yang tepat. Alamat lama dibuat 200 lalu dialihkan di klien.
+//  6. sitemap.xml, robots.txt, .nojekyll, manifest (id = base), dan BUILD_ID service worker.
 import { mkdir, readdir, readFile, rm, writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
+import { resolveSite } from './site-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const dist = resolve(root, 'dist');
-const SITE = 'https://syamaydev.github.io/muslimweb';
+const ssrDir = resolve(root, 'dist-ssr');
+const { base: BASE_PATH, url: SITE } = resolveSite();
 const surahIndex = JSON.parse(await readFile(resolve(root, 'src/data/surah-index.json'), 'utf8'));
+const { render } = await import(pathToFileURL(resolve(ssrDir, 'entry-server.js')).href);
 
 export const ROUTES = [
   { path: '/', title: 'iMuslim — Teman Ibadah Harian', description: null },
@@ -71,10 +75,12 @@ const DEFAULT_DESC =
 
 const esc = (s) => s.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
 
+/** URL kanonis: folder statis dilayani dengan garis miring akhir (GitHub Pages & Vercel trailingSlash). */
+const pageUrl = (path) => `${SITE}${path === '/' ? '/' : `${path}/`}`;
+
 function withMeta(html, { title, description, canonical, noindex = false }) {
   const desc = esc(description ?? DEFAULT_DESC);
-  // GitHub Pages mengalihkan /folder → /folder/ (301), jadi canonical memakai garis miring akhir.
-  const url = `${SITE}${canonical === '/' ? '/' : `${canonical}/`}`;
+  const url = pageUrl(canonical);
   let out = html
     .replace(/<title>[^<]*<\/title>/, `<title>${esc(title)}</title>`)
     .replace(/(<meta\s+name="description"\s+content=")[^"]*(")/s, `$1${desc}$2`)
@@ -86,8 +92,24 @@ function withMeta(html, { title, description, canonical, noindex = false }) {
   return out;
 }
 
-// ---------- Preload per route (mengurangi rantai muat SPA) ----------
-const BASE_PATH = '/muslimweb/';
+// ---------- Template: URL situs + CSS inline ----------
+let template = await readFile(resolve(dist, 'index.html'), 'utf8');
+if (!/<div id="root"><!--app-html-->[\s\S]*?<!--\/app-html--><\/div>/.test(template)) throw new Error('dist/index.html tidak memiliki penanda <!--app-html-->');
+const buildId = createHash('sha256').update(template).digest('hex').slice(0, 12);
+template = template.replaceAll('__SITE_URL__', SITE);
+
+const cssLinks = [...template.matchAll(/<link rel="stylesheet" crossorigin href="([^"]+)">\s*/g)];
+if (cssLinks.length !== 1) throw new Error(`Diharapkan tepat 1 stylesheet, ditemukan ${cssLinks.length}`);
+const css = await readFile(resolve(dist, cssLinks[0][1].slice(BASE_PATH.length)), 'utf8');
+template = template.replace(cssLinks[0][0], `<style>${css.trim()}</style>\n    `);
+
+// Halaman sudah diprerender: JavaScript hanya diperlukan untuk hydration, bukan untuk
+// mengecat. Prioritas rendah membiarkan HTML & font menang di jaringan yang lambat.
+template = template
+  .replace(/<script type="module" crossorigin src=/g, '<script type="module" crossorigin fetchpriority="low" src=')
+  .replace(/<link rel="modulepreload" crossorigin href=/g, '<link rel="modulepreload" crossorigin fetchpriority="low" href=');
+
+// ---------- Preload per route ----------
 const manifest = JSON.parse(await readFile(resolve(dist, '.vite/manifest.json'), 'utf8'));
 const assetFiles = await readdir(resolve(dist, 'assets'));
 const findAsset = (re) => assetFiles.find((f) => re.test(f));
@@ -98,80 +120,86 @@ function pageModuleFor(path) {
   const map = {
     quran: b ? 'src/pages/quran/SurahPage.jsx' : 'src/pages/quran/QuranIndex.jsx',
     sholat: 'src/pages/Sholat.jsx',
-    jadwalsholatdanimsakiah: 'src/pages/Sholat.jsx',
     doa: b ? 'src/pages/doa/DoaDetail.jsx' : 'src/pages/doa/DoaIndex.jsx',
     hadits: c ? 'src/pages/hadits/HaditsDetail.jsx' : b ? 'src/pages/hadits/HaditsBook.jsx' : 'src/pages/hadits/HaditsIndex.jsx',
-    hadist: 'src/pages/hadits/HaditsIndex.jsx',
     kalender: 'src/pages/Kalender.jsx',
     kiblat: 'src/pages/Kiblat.jsx',
     zakat: 'src/pages/Zakat.jsx',
-    kalkulatorzakat: 'src/pages/Zakat.jsx',
     pengaturan: 'src/pages/Pengaturan.jsx',
-    setting: 'src/pages/Pengaturan.jsx',
     tentang: 'src/pages/Tentang.jsx',
   };
   return map[a] ?? null;
 }
 
-function collect(key, files, css, seen = new Set()) {
+function collect(key, files, seen = new Set()) {
   if (seen.has(key) || !manifest[key]) return;
   seen.add(key);
-  const m = manifest[key];
-  files.add(m.file);
-  (m.css ?? []).forEach((c) => css.add(c));
-  (m.imports ?? []).forEach((k) => collect(k, files, css, seen));
+  files.add(manifest[key].file);
+  (manifest[key].imports ?? []).forEach((k) => collect(k, files, seen));
 }
-
 const entryFiles = new Set();
-const entryCss = new Set();
-collect('index.html', entryFiles, entryCss);
+collect('index.html', entryFiles);
 
 const FONT_UI = findAsset(/^plus-jakarta-sans-latin-wght-normal-.*\.woff2$/);
 const FONT_DISPLAY = findAsset(/^fraunces-latin-600-normal-.*\.woff2$/);
 const FONT_ARABIC = findAsset(/^amiri-quran-arabic-400-normal-.*\.woff2$/);
 if (!FONT_UI || !FONT_DISPLAY || !FONT_ARABIC) throw new Error('Berkas font utama tidak ditemukan di dist/assets');
 
-function preloadTags(path) {
+function preloadTags(path, { arabic = false } = {}) {
   const tags = [];
   const font = (f) => tags.push(`<link rel="preload" href="${BASE_PATH}assets/${f}" as="font" type="font/woff2" crossorigin />`);
   font(FONT_UI);
   font(FONT_DISPLAY);
-  if (/^\/(quran\/\d+|doa\/[^/]+\/\d+|hadits\/[^/]+)/.test(path)) font(FONT_ARABIC);
+  // Font Arab di-preload bila HTML halaman memuat teks Arab (mis. daftar surah) atau halaman
+  // detail yang menampilkannya segera setelah data datang. Tanpa preload, font yang baru
+  // ditemukan saat layout mendapat prioritas tertinggi dan ikut menunda cat pertama.
+  if (arabic || /^\/(quran\/\d+|doa\/[^/]+\/\d+|hadits\/[^/]+)/.test(path)) font(FONT_ARABIC);
+  // Modul halaman tidak di-preload dari <head> (akan bersaing dengan cat pertama);
+  // main.jsx membaca daftar ini dan mem-preload-nya tepat setelah First Contentful Paint.
   const page = pageModuleFor(path);
   if (page) {
     const files = new Set();
-    const css = new Set();
-    collect(page, files, css);
-    for (const c of css) if (!entryCss.has(c)) tags.push(`<link rel="stylesheet" crossorigin href="${BASE_PATH}${c}" />`);
-    for (const f of files) if (!entryFiles.has(f)) tags.push(`<link rel="modulepreload" crossorigin href="${BASE_PATH}${f}" />`);
+    collect(page, files);
+    const list = [...files].filter((f) => !entryFiles.has(f)).map((f) => `${BASE_PATH}${f}`);
+    if (list.length) tags.push(`<meta name="imuslim:modules" content="${list.join(' ')}" />`);
   }
   return tags.map((t) => `    ${t}`).join('\n');
 }
 
-async function writeRoute(path, html) {
-  const file = path === '/' ? resolve(dist, 'index.html') : resolve(dist, `.${path}`, 'index.html');
+const fileFor = (path) => (path === '/' ? resolve(dist, 'index.html') : resolve(dist, `.${path}`, 'index.html'));
+
+async function writePage(path, html, options) {
+  const file = fileFor(path);
   await mkdir(dirname(file), { recursive: true });
-  await writeFile(file, html.replace('</head>', `${preloadTags(path)}\n  </head>`));
+  await writeFile(file, html.replace('</head>', `${preloadTags(path, options)}\n  </head>`));
 }
 
-const template = await readFile(resolve(dist, 'index.html'), 'utf8');
-if (!template.includes('<div id="root">')) throw new Error('dist/index.html tidak valid');
+/** Halaman prerender: HTML React disisipkan ke #root dan ditandai path-nya untuk hydration. */
+async function prerenderPage(path, meta) {
+  const app = await render(path);
+  const html = withMeta(template, meta).replace(
+    /<div id="root"><!--app-html-->[\s\S]*?<!--\/app-html--><\/div>/,
+    () => `<div id="root" data-ssr="${esc(path)}">${app}</div>`,
+  );
+  await writePage(path, html, { arabic: /\blang="ar"/.test(app) });
+}
 
-for (const r of ROUTES) await writeRoute(r.path, withMeta(template, { title: r.title, description: r.description, canonical: r.path }));
+let prerendered = 0;
+for (const r of ROUTES) {
+  await prerenderPage(r.path, { title: r.title, description: r.description, canonical: r.path });
+  prerendered++;
+}
 
 for (const s of surahIndex.surahs) {
-  await writeRoute(
-    `/quran/${s.number}`,
-    withMeta(template, {
-      title: `Surah ${s.latin} (${s.meaning}) · Al-Qur'an · iMuslim`,
-      description: `Baca Surah ${s.latin} (${s.name}) — ${s.meaning}, ${s.ayahCount} ayat, ${s.place}. Teks Arab, latin, terjemahan, tafsir, dan audio murattal.`,
-      canonical: `/quran/${s.number}`,
-    }),
-  );
+  await prerenderPage(`/quran/${s.number}`, {
+    title: `Surah ${s.latin} (${s.meaning}) · Al-Qur'an · iMuslim`,
+    description: `Baca Surah ${s.latin} (${s.name}) — ${s.meaning}, ${s.ayahCount} ayat, ${s.place}. Teks Arab, latin, terjemahan, tafsir, dan audio murattal.`,
+    canonical: `/quran/${s.number}`,
+  });
+  prerendered++;
 }
 
-// Route dinamis yang jumlahnya kecil & stabil juga dibuatkan HTML agar tautan bagikan
-// berstatus 200 (judul detail diperbarui di klien). Jumlah sesuai audit API 24-10-2026;
+// Route dinamis yang jumlahnya kecil & stabil. Jumlah sesuai audit API 24-10-2026;
 // item baru di luar rentang ini tetap berfungsi lewat 404.html.
 const HADITH_BOOKS = {
   'abu-dawud': 'Abu Dawud',
@@ -198,33 +226,44 @@ for (let i = 1; i <= 227; i++) {
 for (let i = 1; i <= 108; i++) {
   DYNAMIC.push({ path: `/doa/myquran/${i}`, title: 'Kumpulan Doa · iMuslim', description: 'Doa dengan teks Arab dan terjemahan dari api.myquran.com.' });
 }
-for (const r of DYNAMIC) await writeRoute(r.path, withMeta(template, { title: r.title, description: r.description, canonical: r.path }));
-
-for (const l of LEGACY) {
-  const target = ROUTES.find((r) => r.path === l.canonical);
-  await writeRoute(l.path, withMeta(template, { title: target.title, description: target.description, canonical: l.canonical, noindex: true }));
+for (const r of DYNAMIC) {
+  await prerenderPage(r.path, { title: r.title, description: r.description, canonical: r.path });
+  prerendered++;
 }
 
+// Alamat lama & 404: tanpa prerender (klien mengalihkan / merender halaman yang tepat).
+for (const l of LEGACY) {
+  const target = ROUTES.find((r) => r.path === l.canonical);
+  await writePage(l.path, withMeta(template, { title: target.title, description: target.description, canonical: l.canonical, noindex: true }));
+}
 await writeFile(resolve(dist, '404.html'), withMeta(template, { title: 'iMuslim', description: DEFAULT_DESC, canonical: '/', noindex: true }));
 
-// sitemap & robots
+// ---------- sitemap, robots, manifest, service worker ----------
 const today = new Date().toISOString().slice(0, 10);
 const urls = [...ROUTES.map((r) => r.path), ...surahIndex.surahs.map((s) => `/quran/${s.number}`)];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls
-  .map((p) => `  <url><loc>${SITE}${p === '/' ? '/' : `${p}/`}</loc><lastmod>${today}</lastmod></url>`)
+  .map((p) => `  <url><loc>${pageUrl(p)}</loc><lastmod>${today}</lastmod></url>`)
   .join('\n')}\n</urlset>\n`;
 await writeFile(resolve(dist, 'sitemap.xml'), sitemap);
 await writeFile(resolve(dist, 'robots.txt'), `User-agent: *\nAllow: /\n\nSitemap: ${SITE}/sitemap.xml\n`);
 await writeFile(resolve(dist, '.nojekyll'), '');
 
-// BUILD_ID service worker = hash isi index.html (berubah bila aset berubah)
-const buildId = createHash('sha256').update(template).digest('hex').slice(0, 12);
+const manifestFile = resolve(dist, 'manifest.webmanifest');
+const webManifest = await readFile(manifestFile, 'utf8');
+if (!webManifest.includes('__BASE__')) throw new Error('Penanda __BASE__ tidak ditemukan di manifest.webmanifest');
+await writeFile(manifestFile, webManifest.replace('__BASE__', BASE_PATH));
+
 const swFile = resolve(dist, 'sw.js');
 const sw = await readFile(swFile, 'utf8');
 if (!sw.includes('__BUILD_ID__')) throw new Error('Penanda __BUILD_ID__ tidak ditemukan di sw.js');
 await writeFile(swFile, sw.replace('__BUILD_ID__', buildId));
 
-// Manifest Vite hanya dibutuhkan saat build.
+// Berkas bantu build tidak ikut dipublikasikan.
 await rm(resolve(dist, '.vite'), { recursive: true, force: true });
+await rm(ssrDir, { recursive: true, force: true });
 
-console.log(`postbuild: ${ROUTES.length} route + ${surahIndex.surahs.length} surah + ${DYNAMIC.length} halaman dinamis + ${LEGACY.length} alamat lama, 404.html, sitemap (${urls.length} URL), sw ${buildId}`);
+console.log(
+  `postbuild: base ${BASE_PATH} · situs ${SITE}\n` +
+    `  ${prerendered} halaman prerender (${ROUTES.length} route, ${surahIndex.surahs.length} surah, ${DYNAMIC.length} dinamis) + ${LEGACY.length} alamat lama + 404.html\n` +
+    `  CSS inline ${(css.length / 1024).toFixed(1)} KB · sitemap ${urls.length} URL · sw ${buildId}`,
+);

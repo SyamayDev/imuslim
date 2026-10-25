@@ -1,8 +1,8 @@
 // Registrasi service worker (hanya build produksi). Juga membersihkan registrasi lama
-// di bawah /muslimweb/ yang bukan milik versi ini, sehingga aset usang tidak tertahan.
+// di bawah base aplikasi yang bukan milik versi ini, sehingga aset usang tidak tertahan.
 export function registerServiceWorker() {
   if (!import.meta.env.PROD || !('serviceWorker' in navigator)) return;
-  const base = import.meta.env.BASE_URL; // "/muslimweb/"
+  const base = import.meta.env.BASE_URL; // "/imuslim/" (GitHub Pages) atau "/" (Vercel)
   const swUrl = `${base}sw.js`;
 
   window.addEventListener('load', async () => {

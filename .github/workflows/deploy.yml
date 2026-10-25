@@ -1,6 +1,9 @@
-# Build, uji, lalu deploy iMuslim ke GitHub Pages.
-# Prasyarat satu kali: Settings → Pages → Build and deployment → Source: "GitHub Actions".
-name: Deploy ke GitHub Pages
+# Setiap push ke main: lint → tes → build → publikasikan dist/ ke branch gh-pages.
+# GitHub Pages lalu menayangkan branch itu di https://syamaydev.github.io/imuslim/.
+# Prasyarat satu kali: Settings → Pages → Build and deployment →
+#   Source: "Deploy from a branch", Branch: gh-pages, folder: / (root).
+# Vercel membangun sendiri dari branch main (lihat vercel.json), tidak lewat workflow ini.
+name: Deploy GitHub Pages
 
 on:
   push:
@@ -10,17 +13,15 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
-  pages: write
-  id-token: write
+  contents: write
 
 concurrency:
-  group: pages-${{ github.ref }}
+  group: gh-pages-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  build:
-    name: Lint, tes, build
+  build-deploy:
+    name: Lint, tes, build & deploy
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -39,27 +40,20 @@ jobs:
       - name: Tes unit & komponen
         run: npm test
 
-      - name: Build produksi (base /muslimweb/)
+      - name: Build produksi (base /imuslim/, 511 halaman prerender)
         run: npm run build
 
-      - name: Siapkan GitHub Pages
-        if: github.event_name != 'pull_request'
-        uses: actions/configure-pages@v5
+      - name: Siapkan isi branch gh-pages
+        run: node scripts/gh-pages-prepare.mjs
 
-      - name: Unggah artefak dist/
+      - name: Publikasikan ke branch gh-pages
         if: github.event_name != 'pull_request'
-        uses: actions/upload-pages-artifact@v3
+        uses: peaceiris/actions-gh-pages@v4
         with:
-          path: dist
-
-  deploy:
-    name: Deploy
-    if: github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - id: deployment
-        uses: actions/deploy-pages@v4
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist
+          publish_branch: gh-pages
+          force_orphan: true
+          user_name: github-actions[bot]
+          user_email: 41898282+github-actions[bot]@users.noreply.github.com
+          commit_message: 'deploy: ${{ github.sha }}'

@@ -22,6 +22,13 @@ describe('fetchJson', () => {
     expect(spy).toHaveBeenCalledTimes(1);
   });
 
+  it('HTTP 400 + {status:false, "Data not found"} (gaya myQuran) → NOT_FOUND', async () => {
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => json({ status: false, message: 'Data not found' }, 400));
+    await expect(fetchJson('https://x.test/400')).rejects.toMatchObject({ kind: ERROR_KIND.NOT_FOUND, status: 400 });
+    vi.spyOn(globalThis, 'fetch').mockImplementation(() => json({ message: 'bad' }, 400));
+    await expect(fetchJson('https://x.test/400b')).rejects.toMatchObject({ kind: ERROR_KIND.HTTP, status: 400 });
+  });
+
   it('429 → RATE_LIMIT dengan Retry-After', async () => {
     vi.spyOn(globalThis, 'fetch').mockImplementation(() => json({}, 429, { 'Retry-After': '30' }));
     await expect(fetchJson('https://x.test/429')).rejects.toMatchObject({ kind: ERROR_KIND.RATE_LIMIT, retryAfter: 30 });

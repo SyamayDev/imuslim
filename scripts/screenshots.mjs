@@ -11,10 +11,11 @@ import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { chromium } from '@playwright/test';
 import sharp from 'sharp';
+import { resolveSite } from './site-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 4199;
-const BASE = `http://localhost:${PORT}/muslimweb`;
+const BASE = `http://localhost:${PORT}${resolveSite().base.replace(/\/$/, '')}`;
 const readme = !process.env.ROUTES;
 const out = resolve(root, process.env.OUT ?? 'docs/screenshots');
 const theme = process.env.THEME ?? 'light';
@@ -61,7 +62,8 @@ let problems = 0;
 
 try {
   for (const [route, name, width, height, th] of jobs) {
-    const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: th, deviceScaleFactor: readme ? 2 : 1, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
+    // reducedMotion: animasi dekoratif berhenti → tangkapan layar stabil & semua konten terlihat.
+    const ctx = await browser.newContext({ viewport: { width, height }, colorScheme: th, reducedMotion: 'reduce', deviceScaleFactor: readme ? 2 : 1, locale: 'id-ID', timezoneId: 'Asia/Jakarta' });
     if (DEMO) {
       await ctx.addInitScript((demo) => {
         try {

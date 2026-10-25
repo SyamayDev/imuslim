@@ -1,6 +1,7 @@
 # Dependensi & hasil build
 node_modules/
 dist/
+dist-ssr/
 coverage/
 
 # Laporan pengujian

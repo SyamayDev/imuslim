@@ -58,7 +58,7 @@ Diuji dari Node.js 22 (`fetch`, OpenSSL) dan curl (Schannel) dengan header `Orig
 | Endpoint | Hasil | CORS | Catatan & keputusan |
 |---|---|---|---|
 | `api.myquran.com/v2/sholat/kota/semua` | 200 · 518 kota · ±0,4 s | `*` | Dipakai |
-| `api.myquran.com/v2/sholat/jadwal/{id}/{y}/{m}` | 200 · 31 hari, field `date` ISO | `*` | Dipakai. ID tidak dikenal → 400 `status:false` |
+| `api.myquran.com/v2/sholat/jadwal/{id}/{y}/{m}` | 200 · 31 hari, field `date` ISO · `data.id` berupa **angka** (nol di depan hilang: `"0105"` → `105`) | `*` | Dipakai. ID tidak dikenal → 400 `{status:false, message:"Data not found"}` |
 | `api.myquran.com/v2/doa/{n}` & `/doa/semua` | 200 · 108 doa · **skema berubah** (`doa`, `artinya`, `latin` kosong) | `*` | Dipakai `/semua` (1 request) |
 | `equran.id/api/v2/surat`, `/surat/{n}`, `/tafsir/{n}` | 200 · gzip | `*` | Sumber utama Al-Qur'an (latin, terjemahan, 6 qari) |
 | `equran.id/api/surat` (v1, dipakai kode lama) | 200 | `*` | Diganti v2 (audio per ayat langsung dari sumber yang sama) |
@@ -78,6 +78,18 @@ Diuji dari Node.js 22 (`fetch`, OpenSSL) dan curl (Schannel) dengan header `Orig
 | YouTube oEmbed (4 video lama) | 200 | — | Judul & kanal asli diverifikasi; judul lama hanya parafrase |
 
 Pemetaan ID kota → zona waktu: ID kota myQuran berprefiks 2 digit per provinsi (34 provinsi, diverifikasi dengan mengambil satu jadwal per prefiks).
+
+### Pemeriksaan ulang jadwal — seluruh 518 kota (24 Oktober 2026, malam)
+
+Laporan pengguna: beranda menampilkan *"Jadwal belum bisa dimuat — format data berubah"*. Penyebabnya bug validasi
+iMuslim, bukan API: ID kota dari daftar berbentuk teks 4 digit (`"0105"`), sedangkan respons jadwal mengirim angka
+(`105`). Pembandingan teks `"105" !== "0105"` menolak **semua kota berawalan 0** (Aceh, Sumatra Utara, Sumatra Barat,
+Riau, Kepulauan Riau, Jambi, Bengkulu, Sumatra Selatan, Bangka Belitung). Perbaikan: ID dibandingkan sebagai angka,
+ID asli (`"0105"`) tetap dipakai untuk zona waktu; respons asli `0105` direkam sebagai fixture tes regresi.
+
+Setelah perbaikan, jadwal Oktober 2026 untuk **518 kota** diambil satu per satu (jeda 400 ms, mundur otomatis saat
+HTTP 429): **517 lolos validasi**. Satu-satunya yang gagal, **Kota Sofifi (3212)**, memang tidak punya data di sumber
+(HTTP 400 `Data not found`); aplikasi kini menampilkannya sebagai *"Data tidak ditemukan di sumber"*, bukan galat umum.
 
 ## 4. Data pengguna lama → migrasi
 
@@ -100,4 +112,15 @@ Pemetaan ID kota → zona waktu: ID kota myQuran berprefiks 2 digit per provinsi
 - Tanggal Hijriah dihitung (Umm al-Qura); penetapan resmi Indonesia bisa berbeda ±1 hari — tersedia penyesuaian manual & pembanding myQuran.
 - Kompas bergantung sensor perangkat; desktop umumnya tidak punya magnetometer.
 - Konten agama bergantung pada API pihak ketiga; bila sumber berubah skema, validasi akan menolak data dan UI menampilkan error (bukan data tebakan).
-- Deep link detail hadits (`/hadits/{kitab}/{nomor}`) dilayani lewat `404.html` GitHub Pages: tampil normal di browser, tetapi berstatus HTTP 404 untuk crawler.
+- Deep link detail hadits (`/hadits/{kitab}/{nomor}`) dilayani lewat `404.html` di GitHub Pages: tampil normal di browser, tetapi berstatus HTTP 404 untuk crawler. Di Vercel, rewrite di `vercel.json` membuatnya berstatus 200.
+- Kota Sofifi (3212) tidak memiliki data jadwal di api.myquran.com.
+
+## 6. Deploy (pembaruan 24 Oktober 2026)
+
+- Repositori diganti nama `muslimweb` → **`imuslim`**. Situs GitHub Pages kini di `https://syamaydev.github.io/imuslim/`;
+  alamat lama `/muslimweb/` tidak dialihkan otomatis oleh GitHub Pages.
+- Saat diperiksa, GitHub Pages masih menayangkan **kode sumber mentah dari branch `main`** (`index.html` Vite dengan
+  `%BASE_URL%` yang belum diganti → logo rusak, aplikasi tidak berjalan). Deploy kini memakai branch **`gh-pages`**
+  (seperti proyek SyamayDev lainnya): workflow mem-build dan mempublikasikan `dist/` ke branch itu setiap push ke `main`.
+- Belum ada proyek Vercel untuk repositori ini di akun yang terhubung; `vercel.json` menyiapkan build, header keamanan,
+  dan rewrite. Base path otomatis: `/imuslim/` (GitHub Pages) atau `/` (Vercel, `VERCEL=1`).

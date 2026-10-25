@@ -118,9 +118,15 @@ await sharp(Buffer.from(og)).png({ compressionLevel: 9 }).toFile(pub('og-image.p
 console.log('  ✓ /public/og-image.png');
 
 // ---------- Modul JS untuk komponen React ----------
+// Presisi 1 desimal cukup untuk wordmark ≤ 64 px (selisih < 0,01 px) dan memangkas ukuran HTML.
+const compactPath = (d) =>
+  d
+    .replace(/-?\d*\.?\d+/g, (n) => String(Math.round(Number(n) * 10) / 10))
+    .replace(/([A-Za-z]) /g, '$1')
+    .replace(/ -/g, '-');
 const js = `// Dihasilkan oleh scripts/generate-brand.mjs — jangan diedit manual.
 export const WORDMARK_VIEWBOX = '${viewBox}';
-export const WORDMARK_LETTERS = '${letters}';
+export const WORDMARK_LETTERS = '${compactPath(letters)}';
 export const WORDMARK_CRESCENT = '${crescentD}';
 export const MARK_ARCH = '${MARK_PATHS.arch}';
 export const MARK_STEM = '${MARK_PATHS.stem}';

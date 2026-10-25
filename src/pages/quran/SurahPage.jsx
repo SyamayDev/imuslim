@@ -12,7 +12,7 @@ import {
   SlidersHorizontal,
   Star,
 } from 'lucide-react';
-import { useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
+import { startTransition, useEffect, useEffectEvent, useMemo, useRef, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { currentTrack, useAudioControls, useAudioState } from '../../app/audio.jsx';
 import { prefsStore, quranStore } from '../../app/stores.js';
@@ -31,6 +31,7 @@ import { toggleFavorite } from '../../features/quran/actions.js';
 import './quran.css';
 
 const BASMALAH = 'بِسْمِ اللّٰهِ الرَّحْمٰنِ الرَّحِيْمِ';
+const AYAH_BATCH = 12;
 
 export default function SurahPage() {
   const { nomor } = useParams();
@@ -77,6 +78,34 @@ function SurahReader({ n, meta }) {
   const owner = `quran:${n}`;
   const surah = res.data;
   const qari = prefs.qari;
+
+  // Surah panjang (mis. Al-Baqarah, 286 ayat) dirender bertahap agar ponsel tidak macet:
+  // gelombang pertama langsung tampil, sisanya menyusul tiap beberapa milidetik.
+  const total = surah?.ayahs.length ?? 0;
+  const [limit, setLimit] = useState(() => Math.max(AYAH_BATCH, (targetAyah ?? 0) + 5));
+  const pendingJump = useRef(null);
+  useEffect(() => {
+    if (!total || limit >= total) return undefined;
+    // Transition → React bisa menyela pekerjaan ini bila pengguna berinteraksi.
+    const t = setTimeout(() => startTransition(() => setLimit((l) => Math.min(total, l + AYAH_BATCH))), 16);
+    return () => clearTimeout(t);
+  }, [limit, total]);
+  /** Gulir ke ayat tertentu; bila belum dirender, perluas dulu lalu gulir setelahnya. */
+  const jumpTo = (a) => {
+    const el = document.getElementById(`ayat-${a}`);
+    if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    else {
+      pendingJump.current = a;
+      setLimit((l) => Math.max(l, a + 5));
+    }
+  };
+  useEffect(() => {
+    const a = pendingJump.current;
+    const el = a != null ? document.getElementById(`ayat-${a}`) : null;
+    if (!el) return;
+    pendingJump.current = null;
+    el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }, [limit]);
 
   // Hentikan audio surah lain saat berpindah surah (mencegah audio bertumpuk).
   const stopOtherSurah = useEffectEvent(() => {
@@ -154,14 +183,18 @@ function SurahReader({ n, meta }) {
           <ArrowLeft aria-hidden="true" /> Daftar surah
         </Link>
         <div className="surah-head__card">
-          <p className="eyebrow">
-            Surah ke-{n} · {meta.place} · {meta.ayahCount} ayat
-          </p>
+          <span className="surah-head__frame" aria-hidden="true" />
+          <span className="surah-head__lattice" aria-hidden="true" />
+          <StarNumber value={n} />
           <p className="surah-head__arabic" lang="ar" dir="rtl">
             {meta.name}
           </p>
           <h1 className="surah-head__title">{meta.latin}</h1>
           <p className="surah-head__meaning">“{meta.meaning}”</p>
+          <p className="surah-head__intro">
+            Surah ke-{n} dari 114 surah dalam Al-Qur'an, terdiri atas {meta.ayahCount} ayat dan diturunkan di {meta.place} (
+            {meta.place === 'Mekah' ? 'Makkiyah' : 'Madaniyah'}).
+          </p>
           <div className="surah-head__actions">
             <button type="button" className="btn btn--primary" onClick={playFull} disabled={!fullSrc}>
               {playingFull && isPlaying ? <Pause aria-hidden="true" /> : <Play aria-hidden="true" />}
@@ -183,45 +216,45 @@ function SurahReader({ n, meta }) {
         </div>
       </header>
 
+      <div className="surah-bar" role="toolbar" aria-label="Navigasi bacaan">
+        <label className="surah-bar__jump">
+          <span>Ke ayat</span>
+          <select
+            className="select"
+            value=""
+            onChange={(e) => {
+              const a = Number(e.target.value);
+              if (a) jumpTo(a);
+            }}
+          >
+            <option value="">Pilih…</option>
+            {Array.from({ length: meta.ayahCount }, (_, i) => (
+              <option key={i + 1} value={i + 1}>
+                {i + 1}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="surah-bar__qari">
+          <span>Qari</span>
+          <select className="select" value={qari} onChange={(e) => prefsStore.set((p) => ({ ...p, qari: e.target.value }))}>
+            {Object.entries(QARI)
+              .filter(([id]) => !surah || Object.keys(surah.audioFull).includes(id) || surah.ayahs[0]?.audio[id])
+              .map(([id, name]) => (
+                <option key={id} value={id}>
+                  {name}
+                </option>
+              ))}
+          </select>
+        </label>
+      </div>
+
       {res.status === 'loading' && <SurahSkeleton />}
       {res.status === 'error' && <ErrorState error={res.error} onRetry={res.reload} title={`Surah ${meta.latin} belum bisa dimuat`} />}
 
       {surah && (
         <>
           <DataNotice meta={res.meta} error={res.error} onRetry={res.reload} fallbackLabel="alquran.cloud — tanpa transliterasi latin & tafsir" />
-
-          <div className="surah-bar" role="toolbar" aria-label="Navigasi bacaan">
-            <label className="surah-bar__jump">
-              <span>Ke ayat</span>
-              <select
-                className="select"
-                value=""
-                onChange={(e) => {
-                  const a = Number(e.target.value);
-                  if (a) document.getElementById(`ayat-${a}`)?.scrollIntoView({ block: 'start', behavior: 'smooth' });
-                }}
-              >
-                <option value="">Pilih…</option>
-                {surah.ayahs.map((a) => (
-                  <option key={a.number} value={a.number}>
-                    {a.number}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="surah-bar__qari">
-              <span>Qari</span>
-              <select className="select" value={qari} onChange={(e) => prefsStore.set((p) => ({ ...p, qari: e.target.value }))}>
-                {Object.entries(QARI)
-                  .filter(([id]) => Object.keys(surah.audioFull).includes(id) || surah.ayahs[0]?.audio[id])
-                  .map(([id, name]) => (
-                    <option key={id} value={id}>
-                      {name}
-                    </option>
-                  ))}
-              </select>
-            </label>
-          </div>
 
           {surah.description && (
             <details className="surah-info">
@@ -240,7 +273,7 @@ function SurahReader({ n, meta }) {
           {n === 9 && <p className="surah-note">Surah At-Taubah tidak diawali basmalah.</p>}
 
           <ol className="ayah-list">
-            {surah.ayahs.map((a) => (
+            {surah.ayahs.slice(0, limit).map((a) => (
               <AyahItem
                 key={a.number}
                 surah={surah}

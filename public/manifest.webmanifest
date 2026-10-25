@@ -2,7 +2,7 @@
   "name": "iMuslim — Teman Ibadah Harian",
   "short_name": "iMuslim",
   "description": "Al-Qur'an digital, jadwal sholat & imsakiyah, doa, hadits, kalender Hijriah, arah kiblat, dan kalkulator zakat.",
-  "id": "/muslimweb/",
+  "id": "__BASE__",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

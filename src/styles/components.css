@@ -930,6 +930,12 @@
 }
 
 /* ---------- Logo ---------- */
+.brand-sprite {
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: hidden;
+}
 .mark {
   width: 40px;
   height: 40px;
@@ -1048,6 +1054,20 @@
     opacity: 1;
     transform: none;
   }
+}
+.theme-toggle__icon {
+  display: inline-grid;
+  place-items: center;
+}
+.theme-toggle__icon svg {
+  grid-area: 1 / 1;
+}
+.theme-toggle__sun,
+:root[data-theme='dark'] .theme-toggle__moon {
+  display: none;
+}
+:root[data-theme='dark'] .theme-toggle__sun {
+  display: block;
 }
 .theme-toggle.is-swapped .theme-toggle__icon {
   animation: theme-swap var(--dur-3) var(--ease-spring);

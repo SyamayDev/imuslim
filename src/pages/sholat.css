@@ -21,12 +21,46 @@
   gap: var(--space-4);
 }
 .today-hero {
+  position: relative;
   display: grid;
   gap: 14px;
   padding: clamp(20px, 4vw, 32px);
   border-radius: var(--radius-xl);
-  background: linear-gradient(160deg, var(--hero-bg), var(--hero-bg-2));
+  background:
+    radial-gradient(80% 90% at 100% 0%, color-mix(in srgb, var(--hero-gold) 16%, transparent) 0%, transparent 60%),
+    linear-gradient(160deg, var(--hero-bg), var(--hero-bg-2));
   color: var(--hero-ink);
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow: var(--shadow-2);
+  animation: fade-up var(--dur-4) var(--ease-out) both;
+}
+/* Corak kisi emas + bintang delapan besar yang berputar sangat pelan */
+.today-hero::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background-color: var(--hero-gold);
+  opacity: 0.14;
+  -webkit-mask: var(--pattern-lattice) 0 0 / 64px 64px repeat, linear-gradient(100deg, transparent 30%, #000 90%);
+  mask: var(--pattern-lattice) 0 0 / 64px 64px repeat, linear-gradient(100deg, transparent 30%, #000 90%);
+  -webkit-mask-composite: source-in;
+  mask-composite: intersect;
+}
+.today-hero::after {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  right: -70px;
+  top: -70px;
+  width: 240px;
+  height: 240px;
+  background-color: var(--hero-gold);
+  opacity: 0.12;
+  -webkit-mask: var(--pattern-star) center / contain no-repeat;
+  mask: var(--pattern-star) center / contain no-repeat;
+  animation: spin-slow 160s linear infinite;
 }
 .today-hero__date {
   font-size: var(--fs-sm);

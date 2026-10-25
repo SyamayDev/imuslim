@@ -1,9 +1,10 @@
-import { ArrowRight, BookOpen, CalendarDays, Clock, Compass, Copy, ExternalLink, HandCoins, HandHeart, Play, ScrollText, Settings, Share2 } from 'lucide-react';
+import { ArrowRight, BookOpen, CalendarDays, Clock, Compass, Copy, ExternalLink, HandCoins, HandHeart, MoonStar, Play, ScrollText, Settings, Share2, Sun, Sunrise, Sunset } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { prefetchProps } from '../app/pages.js';
 import { eventsStore, prefsStore, quranStore } from '../app/stores.js';
 import { Mark } from '../components/brand/Logo.jsx';
 import { ArabicText } from '../components/ui/Content.jsx';
-import { Ornament } from '../components/ui/Ornament.jsx';
+import { ArchFrame, Medallion, Ornament, Rosette, Sparkle, StarShape } from '../components/ui/Ornament.jsx';
 import { ErrorState, Skeleton } from '../components/ui/Status.jsx';
 import { NextPrayerCard } from '../features/home/NextPrayerCard.jsx';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
@@ -36,6 +37,14 @@ function dayIndex(iso, length) {
   return ((days % length) + length) % length;
 }
 
+/** Ikon kecil penanda waktu hari untuk sapaan. */
+function GreetingIcon({ hour }) {
+  if (hour >= 3 && hour < 6) return <Sunrise aria-hidden="true" />;
+  if (hour >= 6 && hour < 15) return <Sun aria-hidden="true" />;
+  if (hour >= 15 && hour < 18) return <Sunset aria-hidden="true" />;
+  return <MoonStar aria-hidden="true" />;
+}
+
 export default function Home() {
   useDocumentMeta({
     title: null,
@@ -46,31 +55,60 @@ export default function Home() {
   const prefs = useStore(prefsStore);
   const quran = useStore(quranStore);
   const events = useStore(eventsStore);
+  // `now` null saat HTML statis dibuat/di-hydrate → sapaan & tanggal diisi sesaat kemudian.
   const now = useNow(60000);
-  const today = localIso(new Date(now));
-  const [y, m, d] = today.split('-').map(Number);
-  const hijri = toHijri(y, m, d, prefs.hijriOffset);
-  const hour = new Date(now).getHours();
-  const todayEvents = events[today] ?? [];
+  const today = now == null ? null : localIso(new Date(now));
+  const hour = now == null ? null : new Date(now).getHours();
+  const hijri = today ? toHijri(...today.split('-').map(Number), prefs.hijriOffset) : null;
+  const todayEvents = today ? (events[today] ?? []) : [];
 
   return (
     <div className="page home">
       <section className="hero" aria-labelledby="hero-title">
-        <div className="hero__pattern" aria-hidden="true" />
+        <div className="hero__art" aria-hidden="true">
+          <span className="hero__lattice" />
+          <span className="hero__glow" />
+          <Rosette className="hero__rosette" />
+          <ArchFrame className="hero__arch" />
+          <Sparkle className="hero__spark" style={{ '--x': '58%', '--y': '14%', '--d': '0s' }} />
+          <Sparkle className="hero__spark" style={{ '--x': '47%', '--y': '70%', '--d': '1.2s', '--s': 0.6 }} />
+          <Sparkle className="hero__spark" style={{ '--x': '88%', '--y': '8%', '--d': '2.1s', '--s': 0.75 }} />
+          <Sparkle className="hero__spark" style={{ '--x': '6%', '--y': '88%', '--d': '0.6s', '--s': 0.5 }} />
+        </div>
+
         <div className="hero__text">
           <Mark animated className="hero__mark" />
-          <p className="hero__salam">Assalamu'alaikum{prefs.name ? `, ${prefs.name}` : ''}</p>
-          <h1 id="hero-title" className="hero__title display">
-            {greeting(hour)}. Semoga hari ini penuh berkah.
-          </h1>
-          <p className="hero__date">
-            <span>{formatLongDate(today)}</span>
-            <span className="hero__dot" aria-hidden="true">
-              ·
-            </span>
-            <span>{formatHijri(hijri)}</span>
+          <p className={`hero__greet ${hour == null ? 'is-pending' : ''}`}>
+            {hour != null && (
+              <>
+                <GreetingIcon hour={hour} />
+                {greeting(hour)}
+                {prefs.name ? `, ${prefs.name}` : ''}
+              </>
+            )}
           </p>
+          <h1 id="hero-title" className="hero__title display">
+            Assalamu'alaikum. <span className="hero__title-soft">Semoga hari ini penuh berkah.</span>
+          </h1>
+          <p className={`hero__date ${today ? '' : 'is-pending'}`}>
+            {today && (
+              <>
+                <span>{formatLongDate(today)}</span>
+                <StarShape className="hero__dot" filled />
+                <span>{formatHijri(hijri)}</span>
+              </>
+            )}
+          </p>
+          <div className="hero__actions">
+            <Link to="/quran" className="btn hero__cta" {...prefetchProps('/quran')}>
+              <BookOpen aria-hidden="true" /> Baca Al-Qur'an
+            </Link>
+            <Link to="/kiblat" className="btn hero__cta hero__cta--ghost" {...prefetchProps('/kiblat')}>
+              <Compass aria-hidden="true" /> Arah kiblat
+            </Link>
+          </div>
         </div>
+
         <NextPrayerCard cityId={prefs.cityId} cityName={prefs.cityName} />
       </section>
 
@@ -84,11 +122,7 @@ export default function Home() {
               </span>
               <span className="continue__text">
                 <span className="continue__label">Acara hari ini</span>
-                <span className="continue__title">
-                  {todayEvents
-                    .map((e) => (e.time ? `${e.name} (${e.time})` : e.name))
-                    .join(' · ')}
-                </span>
+                <span className="continue__title">{todayEvents.map((e) => (e.time ? `${e.name} (${e.time})` : e.name)).join(' · ')}</span>
               </span>
               <ArrowRight aria-hidden="true" className="continue__arrow" />
             </Link>
@@ -98,19 +132,19 @@ export default function Home() {
 
       <section className="section" aria-labelledby="fitur-title">
         <div className="section__head">
-          <h2 id="fitur-title" className="section__title">
-            Fitur
+          <h2 id="fitur-title" className="section__title section__title--ornate">
+            Fitur iMuslim
           </h2>
         </div>
         <ul className="features">
-          {FEATURES.map(({ to, label, desc, icon: Icon }, i) => (
+          {FEATURES.map(({ to, label, desc, icon }, i) => (
             <li key={to} className="reveal" style={{ '--i': i }}>
-              <Link to={to} className="feature">
-                <span className="feature__icon">
-                  <Icon aria-hidden="true" />
-                </span>
+              <Link to={to} className="feature" {...prefetchProps(to)}>
+                <StarShape className="feature__watermark" />
+                <Medallion icon={icon} className="feature__medallion" />
                 <span className="feature__label">{label}</span>
                 <span className="feature__desc">{desc}</span>
+                <ArrowRight aria-hidden="true" className="feature__arrow" />
               </Link>
             </li>
           ))}
@@ -124,7 +158,7 @@ export default function Home() {
 
       <section className="section" aria-labelledby="kajian-title">
         <div className="section__head">
-          <h2 id="kajian-title" className="section__title">
+          <h2 id="kajian-title" className="section__title section__title--ornate">
             Rekomendasi kajian
           </h2>
           <span className="subtle" style={{ fontSize: 'var(--fs-xs)' }}>
@@ -132,8 +166,8 @@ export default function Home() {
           </span>
         </div>
         <ul className="videos">
-          {VIDEOS.map((v) => (
-            <li key={v.id}>
+          {VIDEOS.map((v, i) => (
+            <li key={v.id} className="reveal-scroll" style={{ '--i': i }}>
               <a className="video" href={youtubeUrl(v.id)} target="_blank" rel="noopener noreferrer">
                 <span className="video__head">
                   <span className="video__play" aria-hidden="true">
@@ -182,29 +216,33 @@ function LastReadCard({ lastRead }) {
 }
 
 function DailyAyah({ today }) {
-  const ref = DAILY_AYAH_REFS[dayIndex(today, DAILY_AYAH_REFS.length)];
-  const res = useResource(`ayah:${ref.join(':')}`, ({ signal, force }) => getAyah(ref, { signal, force }));
+  const ref = today ? DAILY_AYAH_REFS[dayIndex(today, DAILY_AYAH_REFS.length)] : null;
+  const res = useResource(ref ? `ayah:${ref.join(':')}` : null, ({ signal, force }) => getAyah(ref, { signal, force }));
   const { copy, share } = useShare();
-  const label = `QS. ${getSurahMeta(ref[0])?.latin ?? ref[0]} [${ref[0]}]: ${ref[1]}`;
+  const label = ref ? `QS. ${getSurahMeta(ref[0])?.latin ?? ref[0]} [${ref[0]}]: ${ref[1]}` : '';
+  const loading = res.status === 'loading' || res.status === 'idle';
 
   return (
     <section className="daily__card daily__card--ayah" aria-labelledby="ayat-title">
+      <span className="daily__band" aria-hidden="true" />
       <div className="daily__head">
-        <span className="eyebrow">Ayat hari ini</span>
+        <span className="eyebrow">
+          <StarShape filled className="eyebrow__star" /> Ayat hari ini
+        </span>
         <h2 id="ayat-title" className="visually-hidden">
           Ayat hari ini
         </h2>
       </div>
-      {res.status === 'loading' && (
-        <div aria-busy="true" style={{ display: 'grid', gap: 12 }}>
-          <Skeleton height={48} />
-          <Skeleton height={18} width="80%" />
-          <Skeleton height={18} width="60%" />
+      {loading && (
+        <div aria-busy="true" className="daily__loading">
+          <Skeleton height={56} />
+          <Skeleton height={18} width="80%" style={{ marginInline: 'auto' }} />
+          <Skeleton height={18} width="60%" style={{ marginInline: 'auto' }} />
         </div>
       )}
       {res.status === 'error' && <ErrorState error={res.error} onRetry={res.reload} title="Ayat belum bisa dimuat" compact />}
       {res.status === 'success' && (
-        <>
+        <div className="daily__body">
           <ArabicText size="lg" className="daily__arabic">
             {res.data.arab}
           </ArabicText>
@@ -231,25 +269,28 @@ function DailyAyah({ today }) {
               <Share2 />
             </button>
           </div>
-        </>
+        </div>
       )}
     </section>
   );
 }
 
 function DailyHadith({ today }) {
-  const res = useResource('arbain', ({ signal, force }) => getArbain({ signal, force }), { isEmpty: (d) => !d?.length });
-  const item = res.data ? res.data[dayIndex(today, res.data.length)] : null;
+  const res = useResource(today ? 'arbain' : null, ({ signal, force }) => getArbain({ signal, force }), { isEmpty: (d) => !d?.length });
+  const item = res.data && today ? res.data[dayIndex(today, res.data.length)] : null;
+  const loading = res.status === 'loading' || res.status === 'idle';
   return (
     <section className="daily__card daily__card--hadith" aria-labelledby="hadits-title">
       <div className="daily__head">
-        <span className="eyebrow">Hadits hari ini</span>
+        <span className="eyebrow">
+          <StarShape filled className="eyebrow__star" /> Hadits hari ini
+        </span>
         <h2 id="hadits-title" className="daily__title">
           {item ? item.title || `Hadits Arbain ke-${item.number}` : 'Arbain An-Nawawi'}
         </h2>
       </div>
-      {res.status === 'loading' && (
-        <div aria-busy="true" style={{ display: 'grid', gap: 10 }}>
+      {loading && (
+        <div aria-busy="true" className="daily__loading daily__loading--left">
           <Skeleton height={18} />
           <Skeleton height={18} width="90%" />
           <Skeleton height={18} width="70%" />
@@ -257,13 +298,13 @@ function DailyHadith({ today }) {
       )}
       {res.status === 'error' && <ErrorState error={res.error} onRetry={res.reload} title="Hadits belum bisa dimuat" compact />}
       {item && (
-        <>
+        <div className="daily__body daily__body--left">
           <p className="daily__hadith">{truncate(item.translation, 360)}</p>
           <p className="daily__source">Hadits Arbain An-Nawawi no. {item.number} · sumber: api.myquran.com</p>
           <Link to={`/hadits/arbain/${item.number}`} className="btn btn--sm daily__more">
             Baca lengkap dengan teks Arab <ArrowRight aria-hidden="true" />
           </Link>
-        </>
+        </div>
       )}
     </section>
   );

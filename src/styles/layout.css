@@ -24,7 +24,6 @@
   max-width: calc(var(--content-max) + 2 * var(--gutter));
   margin: 0 auto;
   padding: var(--space-6) var(--gutter) var(--space-8);
-  animation: fade-up var(--dur-3) var(--ease-out) both;
 }
 .page--reading {
   max-width: calc(var(--reading-max) + 2 * var(--gutter));

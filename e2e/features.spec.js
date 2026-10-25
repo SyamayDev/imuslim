@@ -1,16 +1,23 @@
 // Alur fitur utama terhadap API publik sungguhan (membutuhkan internet).
 import { expect, test } from '@playwright/test';
 
+/** Buka halaman lalu tunggu React selesai hydrate (JS dimuat setelah cat pertama). */
+async function open(page, path) {
+  const res = await page.goto(path);
+  await page.locator('html[data-ready]').waitFor({ state: 'attached' });
+  return res;
+}
+
 test.describe("Al-Qur'an", () => {
   test('cari surah, buka, tandai terakhir dibaca, simpan ayat', async ({ page }) => {
-    await page.goto('quran/');
+    await open(page, 'quran/');
     await page.getByRole('searchbox', { name: 'Cari surah' }).fill('ikhlas');
     await page.getByRole('link', { name: /Al-Ikhlas/ }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Al-Ikhlas');
     await expect(page.locator('#ayat-4 .arabic')).toBeVisible();
     await page.getByRole('button', { name: 'Tandai ayat 2 sebagai terakhir dibaca' }).click();
     await page.getByRole('button', { name: 'Simpan ayat 3' }).click();
-    await page.goto('quran/');
+    await open(page, 'quran/');
     await expect(page.getByText('Terakhir dibaca')).toBeVisible();
     await expect(page.getByRole('link', { name: /QS\. Al-Ikhlas · ayat 2/ })).toBeVisible();
     await page.getByRole('tab', { name: /Ayat tersimpan/ }).click();
@@ -18,7 +25,7 @@ test.describe("Al-Qur'an", () => {
   });
 
   test('audio surah: pemutar muncul dan bisa dihentikan; pindah surah menghentikan audio', async ({ page }) => {
-    await page.goto('quran/112/');
+    await open(page, 'quran/112/');
     await page.getByRole('button', { name: 'Putar mulai ayat 1' }).click();
     const player = page.getByRole('region', { name: 'Pemutar audio' });
     await expect(player).toBeVisible();
@@ -29,14 +36,14 @@ test.describe("Al-Qur'an", () => {
   });
 
   test('?ayat= menggulir ke ayat tujuan', async ({ page }) => {
-    await page.goto('quran/2/?ayat=255');
+    await open(page, 'quran/2/?ayat=255');
     await expect(page.locator('#ayat-255')).toBeInViewport({ timeout: 20_000 });
   });
 });
 
 test.describe('jadwal sholat', () => {
   test('tanpa kota tidak menampilkan jadwal; pilih kota menampilkan jadwal & imsakiyah', async ({ page }) => {
-    await page.goto('sholat/');
+    await open(page, 'sholat/');
     await expect(page.getByText('Belum ada kota dipilih')).toBeVisible();
     const combo = page.getByRole('combobox', { name: 'Cari kota atau kabupaten' });
     await combo.fill('bandung');
@@ -51,7 +58,7 @@ test.describe('jadwal sholat', () => {
   test('lokasi ditolak → pesan jelas, tidak ada kota bawaan', async ({ browser }) => {
     const ctx = await browser.newContext({ permissions: [] });
     const page = await ctx.newPage();
-    await page.goto('http://localhost:4173/muslimweb/sholat/');
+    await open(page, 'http://localhost:4173/imuslim/sholat/');
     await page.getByRole('button', { name: 'Gunakan lokasi saya' }).click();
     await expect(page.getByRole('status').filter({ hasText: /Izin lokasi ditolak|tidak tersedia|habis/ })).toBeVisible();
     await expect(page.getByText('Belum ada kota dipilih')).toBeVisible();
@@ -61,17 +68,17 @@ test.describe('jadwal sholat', () => {
 
 test.describe('doa, hadits, kalender, kiblat, zakat', () => {
   test('doa: cari, buka detail, simpan', async ({ page }) => {
-    await page.goto('doa/');
+    await open(page, 'doa/');
     await page.getByRole('searchbox', { name: 'Cari doa' }).fill('tidur');
     await page.getByRole('link', { name: /Doa Sebelum Tidur 1/ }).click();
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Doa Sebelum Tidur 1');
     await page.getByRole('button', { name: 'Simpan' }).click();
-    await page.goto('doa/?koleksi=tersimpan');
+    await open(page, 'doa/?koleksi=tersimpan');
     await expect(page.getByRole('link', { name: /Doa Sebelum Tidur 1/ })).toBeVisible();
   });
 
   test('hadits: buka kitab, lompat ke nomor', async ({ page }) => {
-    await page.goto('hadits/');
+    await open(page, 'hadits/');
     await page.getByRole('link', { name: /HR\. Muslim/ }).click();
     await page.getByLabel('Lompat ke nomor').fill('8');
     await page.getByRole('button', { name: 'Buka' }).click();
@@ -80,7 +87,7 @@ test.describe('doa, hadits, kalender, kiblat, zakat', () => {
   });
 
   test('kalender: tambah, ubah, hapus acara', async ({ page }) => {
-    await page.goto('kalender/');
+    await open(page, 'kalender/');
     await page.getByRole('button', { name: 'Tambah acara' }).click();
     const dialog = page.getByRole('dialog', { name: 'Tambah acara' });
     await dialog.getByRole('button', { name: 'Simpan' }).click();
@@ -96,7 +103,7 @@ test.describe('doa, hadits, kalender, kiblat, zakat', () => {
   });
 
   test('kiblat: koordinat manual Jakarta ≈ 295°', async ({ page }) => {
-    await page.goto('kiblat/');
+    await open(page, 'kiblat/');
     await page.getByLabel('Lintang (latitude)').fill('-6.2088');
     await page.getByLabel('Bujur (longitude)').fill('106.8456');
     await page.getByRole('button', { name: 'Hitung arah kiblat' }).click();
@@ -105,7 +112,7 @@ test.describe('doa, hadits, kalender, kiblat, zakat', () => {
   });
 
   test('zakat penghasilan dengan harga emas manual', async ({ page }) => {
-    await page.goto('zakat/');
+    await open(page, 'zakat/');
     await page.getByLabel('Harga emas per gram').fill('1200000');
     await page.getByLabel('Gaji / penghasilan per bulan').fill('10000000');
     const result = page.locator('.zakat-result');

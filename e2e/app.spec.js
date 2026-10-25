@@ -1,7 +1,14 @@
 import { expect, test } from '@playwright/test';
 
+/** Buka halaman lalu tunggu React selesai hydrate (JS dimuat setelah cat pertama). */
+async function open(page, path) {
+  const res = await page.goto(path);
+  await page.locator('html[data-ready]').waitFor({ state: 'attached' });
+  return res;
+}
+
 const ROUTES = [
-  ['', /Selamat (pagi|siang|sore|malam)/],
+  ['', /Assalamu'alaikum/],
   ['quran/', /Al-Qur'an Digital/],
   ['quran/36/', /Yasin/],
   ['sholat/', /Jadwal Sholat/],
@@ -42,6 +49,32 @@ test.describe('route & refresh', () => {
     });
   }
 
+  test('HTML prerender sudah berisi konten sebelum JavaScript berjalan', async ({ request }) => {
+    for (const [path, text] of [
+      ['', 'Assalamu&#x27;alaikum'],
+      ['quran/', 'Al-Qur&#x27;an Digital'],
+      ['quran/36/', 'Yasin'],
+      ['sholat/', 'Jadwal Sholat &amp; Imsakiyah'],
+      ['zakat/', 'Kalkulator Zakat'],
+    ]) {
+      const res = await request.get(path);
+      expect(res.status()).toBe(200);
+      const html = await res.text();
+      expect(html, `/${path}`).toContain(`data-ssr="/${path.replace(/\/$/, '')}"`);
+      expect(html, `/${path}`).toMatch(new RegExp(`<h1[^>]*>[^<]*${text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}`));
+    }
+  });
+
+  test('beranda: sapaan & tanggal muncul setelah hydration tanpa error', async ({ page }) => {
+    const errors = watchErrors(page);
+    await open(page, '');
+    await expect(page.locator('.hero__greet')).toContainText(/Selamat (pagi|siang|sore|malam)/);
+    await expect(page.locator('.hero__date')).toContainText(/\d{4}/);
+    // Setelah hydration, tombol tema dikendalikan React (klik mengubah tema).
+    await page.waitForLoadState('networkidle');
+    expect(errors).toEqual([]);
+  });
+
   test('alamat lama dialihkan ke route baru', async ({ page }) => {
     for (const [from, to] of [
       ['jadwalsholatdanimsakiah/', /\/sholat$/],
@@ -53,7 +86,7 @@ test.describe('route & refresh', () => {
       ['quran/index.html', /\/quran\/?$/],
       ['hadits/index.html', /\/hadits\/?$/],
     ]) {
-      await page.goto(from);
+      await open(page, from);
       await expect(page).toHaveURL(to);
     }
   });
@@ -63,11 +96,11 @@ test.describe('route & refresh', () => {
     expect(res.status()).toBe(404);
     await expect(page.getByRole('heading', { level: 1 })).toHaveText('Halaman tidak ditemukan');
     await page.getByRole('link', { name: 'Kembali ke beranda' }).click();
-    await expect(page).toHaveURL(/\/muslimweb\/?$/);
+    await expect(page).toHaveURL(/\/imuslim\/?$/);
   });
 
   test('navigasi antarfitur tanpa memuat ulang halaman', async ({ page, isMobile }) => {
-    await page.goto('');
+    await open(page, '');
     if (isMobile) {
       await page.getByRole('navigation', { name: 'Navigasi bawah' }).getByRole('link', { name: "Qur'an" }).click();
       await expect(page.getByRole('heading', { level: 1 })).toHaveText("Al-Qur'an Digital");
@@ -91,7 +124,7 @@ test.describe('responsif', () => {
     test(`tanpa scroll horizontal di lebar ${width}px`, async ({ page }) => {
       await page.setViewportSize({ width, height: 900 });
       for (const path of ['', 'quran/', 'quran/1/', 'sholat/', 'doa/', 'kalender/', 'kiblat/', 'zakat/', 'pengaturan/', 'tentang/']) {
-        await page.goto(path);
+        await open(page, path);
         await page.waitForLoadState('networkidle');
         const overflow = await page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
         expect(overflow, `overflow di /${path} (${width}px)`).toBeLessThanOrEqual(0);
@@ -104,7 +137,7 @@ test.describe('tema & layar penuh', () => {
   test('tombol tema: awalnya ikut perangkat, lalu terang ↔ gelap & bertahan', async ({ browser }) => {
     const ctx = await browser.newContext({ colorScheme: 'light', viewport: { width: 1280, height: 800 } });
     const page = await ctx.newPage();
-    await page.goto('http://localhost:4173/muslimweb/');
+    await open(page, 'http://localhost:4173/imuslim/');
     const html = page.locator('html');
     await expect(html).toHaveAttribute('data-theme', 'light');
     const nav = page.getByRole('navigation', { name: 'Navigasi utama' });
@@ -119,25 +152,25 @@ test.describe('tema & layar penuh', () => {
   });
 
   test('tema gelap bertahan setelah refresh', async ({ page }) => {
-    await page.goto('pengaturan/');
+    await open(page, 'pengaturan/');
     await page.getByRole('radio', { name: /Gelap/ }).check();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await page.reload();
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
-    await page.goto('quran/');
+    await open(page, 'quran/');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
   });
 
   test('preferensi sistem dihormati bila pengguna belum memilih', async ({ browser }) => {
     const ctx = await browser.newContext({ colorScheme: 'dark' });
     const page = await ctx.newPage();
-    await page.goto('http://localhost:4173/muslimweb/');
+    await open(page, 'http://localhost:4173/imuslim/');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'dark');
     await ctx.close();
   });
 
   test('tombol layar penuh masuk & keluar', async ({ page, isMobile }) => {
-    await page.goto('');
+    await open(page, '');
     const scope = isMobile ? page.locator('.topbar') : page.getByRole('navigation', { name: 'Navigasi utama' });
     await scope.getByRole('button', { name: 'Masuk layar penuh' }).click();
     await expect.poll(() => page.evaluate(() => Boolean(document.fullscreenElement))).toBe(true);
@@ -148,7 +181,7 @@ test.describe('tema & layar penuh', () => {
 
 test.describe('aksesibilitas dasar', () => {
   test('tautan lewati ke konten & satu h1 per halaman', async ({ page }) => {
-    await page.goto('doa/');
+    await open(page, 'doa/');
     await page.keyboard.press('Tab');
     const skip = page.getByRole('link', { name: 'Lewati ke konten utama' });
     await expect(skip).toBeFocused();
@@ -158,7 +191,7 @@ test.describe('aksesibilitas dasar', () => {
   });
 
   test('teks Arab memakai lang="ar" dir="rtl"', async ({ page }) => {
-    await page.goto('quran/112/');
+    await open(page, 'quran/112/');
     const arabic = page.locator('.ayah .arabic').first();
     await expect(arabic).toBeVisible();
     await expect(arabic).toHaveAttribute('lang', 'ar');
@@ -167,7 +200,7 @@ test.describe('aksesibilitas dasar', () => {
   });
 
   test('gambar punya alt & tombol ikon punya nama', async ({ page }) => {
-    await page.goto('');
+    await open(page, '');
     await page.waitForLoadState('networkidle');
     const missingAlt = await page.locator('img:not([alt])').count();
     expect(missingAlt).toBe(0);

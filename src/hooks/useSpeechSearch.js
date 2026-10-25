@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useClientValue } from './useHydrated.js';
 
 const Recognition = typeof window !== 'undefined' ? (window.SpeechRecognition ?? window.webkitSpeechRecognition) : undefined;
+const recognitionSupported = () => Boolean(Recognition);
 
 const ERRORS = {
   'not-allowed': 'Izin mikrofon ditolak. Aktifkan izin mikrofon untuk situs ini.',
@@ -17,6 +19,7 @@ const ERRORS = {
  * tombol tidak ditampilkan.
  */
 export function useSpeechSearch(onResult) {
+  const supported = useClientValue(recognitionSupported, false);
   const [listening, setListening] = useState(false);
   const [interim, setInterim] = useState('');
   const [error, setError] = useState('');
@@ -61,5 +64,5 @@ export function useSpeechSearch(onResult) {
 
   const stop = useCallback(() => recRef.current?.stop(), []);
 
-  return { supported: Boolean(Recognition), listening, interim, error, start, stop };
+  return { supported, listening, interim, error, start, stop };
 }

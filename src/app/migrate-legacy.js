@@ -2,7 +2,7 @@
 // Prinsip: tidak menghapus data lama milik orang lain (origin syamaydev.github.io dipakai
 // bersama oleh semua proyek GitHub Pages pengguna), kecuali "userPassword" yang menyimpan
 // kata sandi teks polos dari formulir palsu versi lama — itu dihapus demi keamanan.
-import { isObj } from '../utils/storage.js';
+import { isObj } from '../utils/validate.js';
 
 const FLAG = 'imuslim:migrated';
 // Versi lama menanam nama pribadi sebagai nilai bawaan "userName". Nama itu tidak boleh

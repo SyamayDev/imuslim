@@ -302,3 +302,21 @@
   font-size: var(--fs-xs);
   color: var(--ink-3);
 }
+
+/* Kerangka sebelum tanggal perangkat diketahui (prerender/hydration) */
+.kal-head__title--placeholder h2,
+.kal-head__title--placeholder p {
+  width: 11ch;
+  margin-inline: auto;
+  border-radius: var(--radius-xs);
+  background: var(--surface-2);
+  color: transparent;
+}
+.kal-head__title--placeholder p {
+  width: 9ch;
+  margin-top: 4px;
+}
+.kal-day--placeholder {
+  pointer-events: none;
+  opacity: 0.55;
+}

@@ -15,6 +15,7 @@ import { useFullscreen } from '../hooks/useFullscreen.js';
 import { cacheClear } from '../services/api/cache.js';
 import { QARI } from '../services/api/quran-constants.js';
 import { localIso } from '../utils/format.js';
+import { useNow } from '../hooks/useNow.js';
 import { formatHijri, toHijri } from '../utils/hijri.js';
 import { useStore } from '../utils/storage.js';
 import './pengaturan.css';
@@ -46,8 +47,9 @@ export default function Pengaturan() {
   const install = useInstallPrompt();
   const toast = useToast();
   const nameId = useId();
-  const today = localIso();
-  const [y, m, d] = today.split('-').map(Number);
+  const now = useNow(60000);
+  const today = now == null ? null : localIso(new Date(now));
+  const [y, m, d] = today ? today.split('-').map(Number) : [];
 
   return (
     <div className="page settings">
@@ -140,7 +142,7 @@ export default function Pengaturan() {
             <select id="hijri-offset" className="select" value={prefs.hijriOffset} onChange={(e) => set({ hijriOffset: Number(e.target.value) })}>
               {[-2, -1, 0, 1, 2].map((o) => (
                 <option key={o} value={o}>
-                  {o === 0 ? 'Tanpa penyesuaian' : `${o > 0 ? '+' : ''}${o} hari`} — hari ini {formatHijri(toHijri(y, m, d, o))}
+                  {`${o === 0 ? 'Tanpa penyesuaian' : `${o > 0 ? '+' : ''}${o} hari`}${today ? ` — hari ini ${formatHijri(toHijri(y, m, d, o))}` : ''}`}
                 </option>
               ))}
             </select>

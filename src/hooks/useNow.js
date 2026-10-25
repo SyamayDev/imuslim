@@ -33,8 +33,14 @@ function getClock(intervalMs) {
   return clock;
 }
 
-/** Waktu sekarang (ms) yang diperbarui tiap `intervalMs`. */
+const serverNow = () => null;
+
+/**
+ * Waktu sekarang (ms) yang diperbarui tiap `intervalMs`.
+ * Bernilai `null` saat prerender & hydration (HTML statis dibuat jauh sebelum dibuka),
+ * jadi komponen menampilkan kerangka dulu lalu waktu sebenarnya sesaat kemudian.
+ */
 export function useNow(intervalMs = 1000) {
   const clock = getClock(intervalMs);
-  return useSyncExternalStore(clock.subscribe, clock.get, clock.get);
+  return useSyncExternalStore(clock.subscribe, clock.get, serverNow);
 }

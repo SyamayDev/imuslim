@@ -26,3 +26,9 @@ export function titleForPath(pathname) {
   const match = NAV.filter((n) => n.to !== '/').find((n) => pathname === n.to || pathname.startsWith(`${n.to}/`));
   return match?.label ?? 'iMuslim';
 }
+
+/** Ikon fitur untuk sebuah path (dipakai medali kepala halaman). */
+export function iconForPath(pathname) {
+  const match = NAV.filter((n) => n.to !== '/').find((n) => pathname === n.to || pathname.startsWith(`${n.to}/`));
+  return match?.icon ?? null;
+}

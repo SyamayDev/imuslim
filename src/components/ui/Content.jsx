@@ -1,5 +1,7 @@
 import { ArrowLeft } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
+import { iconForPath } from '../../app/nav.js';
+import { Medallion } from './Ornament.jsx';
 import { tokenizeSimpleHtml } from '../../utils/text.js';
 
 /** Teks Arab: selalu lang="ar" & dir="rtl". */
@@ -45,18 +47,30 @@ export function Paragraphs({ text, className = '' }) {
   );
 }
 
-export function PageHeader({ eyebrow, title, description, actions, back, children }) {
+/**
+ * Kepala halaman: medali ikon fitur (bintang delapan), eyebrow, judul, deskripsi.
+ * Ikon diambil otomatis dari navigasi sesuai path; `icon={false}` untuk menyembunyikan.
+ */
+export function PageHeader({ eyebrow, title, description, actions, back, icon, children }) {
+  const { pathname } = useLocation();
+  const Icon = icon === false ? null : (icon ?? iconForPath(pathname));
   return (
     <header className="page-head">
+      <span className="page-head__art" aria-hidden="true" />
       {back && (
         <Link to={back.to} className="back-link">
           <ArrowLeft aria-hidden="true" /> {back.label}
         </Link>
       )}
-      {eyebrow && <span className="eyebrow">{eyebrow}</span>}
-      <div className="page-head__row">
-        <h1 className="page-head__title">{title}</h1>
-        {actions && <div className="page-head__actions">{actions}</div>}
+      <div className="page-head__main">
+        {Icon && <Medallion icon={Icon} className="page-head__medallion" />}
+        <div className="page-head__text">
+          {eyebrow && <span className="eyebrow">{eyebrow}</span>}
+          <div className="page-head__row">
+            <h1 className="page-head__title">{title}</h1>
+            {actions && <div className="page-head__actions">{actions}</div>}
+          </div>
+        </div>
       </div>
       {description && <p className="page-head__desc">{description}</p>}
       {children}

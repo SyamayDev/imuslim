@@ -1,7 +1,7 @@
 // Server statis lokal yang meniru GitHub Pages untuk project site:
-//  - aplikasi dilayani di /muslimweb/
+//  - aplikasi dilayani di base build (bawaan /imuslim/, lihat scripts/site-config.mjs)
 //  - folder → index.html, file tidak ada → 404.html dengan status 404 (tanpa rewrite SPA)
-//  - "/muslimweb" tanpa garis miring dialihkan 301 ke "/muslimweb/"
+//  - folder tanpa garis miring dialihkan 301 ke versi bergaris miring
 // Dipakai untuk `npm run preview`, pengujian e2e, dan Lighthouse.
 import { createReadStream } from 'node:fs';
 import { stat } from 'node:fs/promises';
@@ -9,9 +9,10 @@ import { createServer } from 'node:http';
 import { dirname, extname, join, normalize, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createGzip } from 'node:zlib';
+import { resolveSite } from './site-config.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..', 'dist');
-const BASE = '/muslimweb/';
+const BASE = resolveSite().base;
 const PORT = Number(process.env.PORT || process.argv[2] || 4173);
 
 const TYPES = {
@@ -57,13 +58,13 @@ function send(req, res, file, status, info) {
 createServer(async (req, res) => {
   const url = new URL(req.url, 'http://localhost');
   let path = decodeURIComponent(url.pathname);
-  if (path === '/' || path === '/muslimweb') {
+  if (BASE !== '/' && (path === '/' || path === BASE.slice(0, -1))) {
     res.writeHead(301, { Location: BASE + url.search });
     return res.end();
   }
   if (!path.startsWith(BASE)) {
     res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' });
-    return res.end('404 (di luar /muslimweb/)');
+    return res.end(`404 (di luar ${BASE})`);
   }
   const rel = normalize(path.slice(BASE.length)).replace(/^([/\\])+/, '');
   if (rel.startsWith('..')) {

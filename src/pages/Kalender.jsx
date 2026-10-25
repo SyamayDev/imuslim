@@ -1,9 +1,10 @@
-import { CalendarPlus, ChevronLeft, ChevronRight, Info, Pencil, Share2, Sparkles, Trash2 } from 'lucide-react';
+import { CalendarDays, CalendarPlus, ChevronLeft, ChevronRight, Info, Pencil, Share2, Sparkles, Trash2 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { eventsStore, prefsStore } from '../app/stores.js';
 import { PageHeader, SourceNote } from '../components/ui/Content.jsx';
 import { Dialog } from '../components/ui/Dialog.jsx';
+import { Skeleton } from '../components/ui/Status.jsx';
 import { useToast } from '../components/ui/Toast.jsx';
 import { useDocumentMeta } from '../hooks/useDocumentMeta.js';
 import { useNow } from '../hooks/useNow.js';
@@ -30,8 +31,78 @@ export default function Kalender() {
     description: 'Kalender Masehi dan Hijriah berdampingan, perkiraan hari besar Islam, serta catatan acara pribadi.',
     path: '/kalender',
   });
+  // Tanggal hari ini baru diketahui di perangkat pengguna (bukan saat HTML dibuat).
   const now = useNow(60000);
-  const today = localIso(new Date(now));
+  const today = now == null ? null : localIso(new Date(now));
+
+  return (
+    <div className="page kalender">
+      <PageHeader
+        eyebrow="Kalender"
+        title="Kalender Masehi & Hijriah"
+        description="Tanggal Hijriah dihitung di perangkat Anda. Tekan tanggal untuk melihat detail atau menambah acara."
+        icon={CalendarDays}
+      />
+      {today ? <CalendarApp today={today} /> : <CalendarSkeleton />}
+      <SourceNote>
+        Tanggal Hijriah: {METHOD_LABEL[hijriMethod()]}, dihitung di perangkat. Awal bulan Hijriah di Indonesia ditetapkan melalui sidang isbat (rukyat & hisab) sehingga bisa berbeda ±1 hari;
+        atur penyesuaian di <Link to="/pengaturan">Pengaturan</Link>. Acara tersimpan hanya di perangkat ini.
+      </SourceNote>
+    </div>
+  );
+}
+
+/** Kerangka berukuran sama dengan kalender asli (6 baris tanggal) → tidak ada pergeseran tata letak. */
+function CalendarSkeleton() {
+  return (
+    <div className="kal-layout" aria-busy="true">
+      <section className="kal-main panel" aria-label="Memuat kalender">
+        <div className="kal-head">
+          <Skeleton width={42} height={42} radius={10} />
+          <div className="kal-head__title kal-head__title--placeholder" aria-hidden="true">
+            <h2>&nbsp;</h2>
+            <p>&nbsp;</p>
+          </div>
+          <Skeleton width={42} height={42} radius={10} />
+        </div>
+        <div className="kal-controls">
+          <Skeleton width={128} height={38} />
+          <Skeleton width={96} height={38} />
+          <Skeleton width={84} height={38} />
+        </div>
+        <table className="kal-grid" aria-hidden="true">
+          <thead>
+            <tr>
+              {DAY_NAMES.map((d) => (
+                <th key={d}>{d.slice(0, 3)}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {Array.from({ length: 6 }, (_, row) => (
+              <tr key={row}>
+                {Array.from({ length: 7 }, (_, i) => (
+                  <td key={i}>
+                    <span className="kal-day kal-day--placeholder skeleton" />
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <span className="visually-hidden" role="status">
+          Memuat kalender…
+        </span>
+      </section>
+      <aside className="kal-side">
+        <Skeleton height={260} radius={20} />
+        <Skeleton height={150} radius={20} />
+      </aside>
+    </div>
+  );
+}
+
+function CalendarApp({ today }) {
   const [ty, tm] = today.split('-').map(Number);
   const prefs = useStore(prefsStore);
   const events = useStore(eventsStore);
@@ -57,7 +128,8 @@ export default function Kalender() {
       const h = toHijri(cursor.y, cursor.m, d, offset);
       list.push({ d, iso, h, islamic: islamicDayFor(h), dow: (first + d - 1) % 7 });
     }
-    while (list.length % 7) list.push(null);
+    // Selalu 6 baris → tinggi kalender tetap saat berpindah bulan.
+    while (list.length < 42) list.push(null);
     return list;
   }, [cursor, offset]);
 
@@ -86,9 +158,7 @@ export default function Kalender() {
   };
 
   return (
-    <div className="page kalender">
-      <PageHeader eyebrow="Kalender" title="Kalender Masehi & Hijriah" description="Tanggal Hijriah dihitung di perangkat Anda. Tekan tanggal untuk melihat detail atau menambah acara." />
-
+    <>
       <div className="kal-layout">
         <section className="kal-main panel" aria-labelledby="kal-title">
           <div className="kal-head">
@@ -224,12 +294,7 @@ export default function Kalender() {
       </div>
 
       <EventEditor state={editor} onClose={() => setEditor(null)} offset={offset} />
-
-      <SourceNote>
-        Tanggal Hijriah: {METHOD_LABEL[hijriMethod()]}, dihitung di perangkat. Awal bulan Hijriah di Indonesia ditetapkan melalui sidang isbat (rukyat & hisab) sehingga bisa berbeda ±1 hari;
-        atur penyesuaian di <Link to="/pengaturan">Pengaturan</Link>. Acara tersimpan hanya di perangkat ini.
-      </SourceNote>
-    </div>
+    </>
   );
 }
 

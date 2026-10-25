@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react';
+import { useClientValue } from './useHydrated.js';
 
 function subscribeOnline(cb) {
   window.addEventListener('online', cb);
@@ -46,6 +47,8 @@ if (typeof window !== 'undefined') {
   });
 }
 
+const isStandalone = () => Boolean(window.matchMedia?.('(display-mode: standalone)').matches);
+
 export function useInstallPrompt() {
   const available = useSyncExternalStore(
     (cb) => {
@@ -55,7 +58,7 @@ export function useInstallPrompt() {
     () => deferredPrompt !== null,
     () => false,
   );
-  const installed = typeof window !== 'undefined' && window.matchMedia?.('(display-mode: standalone)').matches;
+  const installed = useClientValue(isStandalone, false);
   const prompt = async () => {
     if (!deferredPrompt) return 'unavailable';
     const e = deferredPrompt;

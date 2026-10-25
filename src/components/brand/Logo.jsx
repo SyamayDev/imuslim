@@ -34,11 +34,26 @@ export function Mark({ tile = false, animated = false, className = '', title }) 
   );
 }
 
+/**
+ * Path wordmark didefinisikan sekali (BrandSprite di AppShell) lalu dirujuk dengan <use>,
+ * sehingga logo yang tampil di sidebar, header, dan footer tidak menggandakan ±6 KB path.
+ */
+export function BrandSprite() {
+  return (
+    <svg width="0" height="0" className="brand-sprite" aria-hidden="true" focusable="false">
+      <defs>
+        <path id="imuslim-wordmark-letters" d={WORDMARK_LETTERS} />
+        <path id="imuslim-wordmark-crescent" d={WORDMARK_CRESCENT} />
+      </defs>
+    </svg>
+  );
+}
+
 export function Wordmark({ className = '', title = 'iMuslim' }) {
   return (
     <svg viewBox={WORDMARK_VIEWBOX} className={`wordmark ${className}`.trim()} role="img" aria-label={title} focusable="false">
-      <path d={WORDMARK_LETTERS} fill="var(--ink)" />
-      <path d={WORDMARK_CRESCENT} fill="var(--gold-line)" />
+      <use href="#imuslim-wordmark-letters" fill="var(--ink)" />
+      <use href="#imuslim-wordmark-crescent" fill="var(--gold-line)" />
     </svg>
   );
 }

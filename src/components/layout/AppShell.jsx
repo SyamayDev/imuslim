@@ -2,8 +2,9 @@ import { LayoutGrid } from 'lucide-react';
 import { Suspense, useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom';
 import { NAV, NAV_GROUPS, BOTTOM_NAV, titleForPath } from '../../app/nav.js';
+import { prefetchProps } from '../../app/pages.js';
 import { useAudioState } from '../../app/audio.jsx';
-import { Mark, Wordmark } from '../brand/Logo.jsx';
+import { BrandSprite, Mark, Wordmark } from '../brand/Logo.jsx';
 import { Dialog } from '../ui/Dialog.jsx';
 import { LoadingBlock } from '../ui/Status.jsx';
 import { FullscreenButton, ThemeToggle } from './AppTools.jsx';
@@ -24,7 +25,7 @@ function Sidebar() {
         <div className="sidebar__group" key={g.id}>
           <span className="sidebar__label">{g.label}</span>
           {NAV.filter((n) => n.group === g.id).map(({ to, label, short, icon: Icon, end }) => (
-            <NavLink key={to} to={to} end={end} className="sidebar__link" title={label}>
+            <NavLink key={to} to={to} end={end} className="sidebar__link" title={label} {...prefetchProps(to)}>
               <Icon aria-hidden="true" />
               <span className="sidebar__text">
                 <span className="only-wide">{label}</span>
@@ -78,7 +79,7 @@ function BottomNav({ onMenu, menuOpen }) {
         const item = NAV.find((n) => n.to === path);
         const Icon = item.icon;
         return (
-          <NavLink key={path} to={path} end={item.end} className="bottom-nav__item">
+          <NavLink key={path} to={path} end={item.end} className="bottom-nav__item" {...prefetchProps(path)}>
             <Icon aria-hidden="true" />
             <span>{item.short}</span>
           </NavLink>
@@ -104,7 +105,7 @@ function MenuSheet({ open, onClose }) {
       <nav aria-label="Semua fitur">
         <div className="menu-grid">
           {NAV.filter((n) => n.to !== '/').map(({ to, label, icon: Icon, end }) => (
-            <NavLink key={to} to={to} end={end} onClick={onClose}>
+            <NavLink key={to} to={to} end={end} onClick={onClose} {...prefetchProps(to)}>
               <Icon aria-hidden="true" />
               {label}
             </NavLink>
@@ -123,6 +124,11 @@ export function AppShell() {
   const [menuOpen, setMenuOpen] = useState(false);
   const { pathname } = useLocation();
   const audio = useAudioState();
+  // Transisi halaman hanya setelah navigasi pertama di dalam aplikasi (bukan saat halaman
+  // prerender pertama kali tampil) → konten awal langsung terlihat penuh.
+  const [firstPath] = useState(pathname);
+  const [navigated, setNavigated] = useState(false);
+  if (!navigated && pathname !== firstPath) setNavigated(true);
 
   // Gulir ke atas saat berpindah halaman (kecuali ada anchor/ayat yang dituju).
   useEffect(() => {
@@ -130,7 +136,8 @@ export function AppShell() {
   }, [pathname]);
 
   return (
-    <div className={`app ${audio.queue ? 'has-player' : ''}`}>
+    <div className={`app ${audio.queue ? 'has-player' : ''} ${navigated ? 'is-navigated' : ''}`}>
+      <BrandSprite />
       <a href="#konten" className="skip-link">
         Lewati ke konten utama
       </a>

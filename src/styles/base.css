@@ -271,7 +271,9 @@ hr {
   }
 }
 
-.reveal {
+/* Muncul bertahap hanya setelah navigasi di dalam aplikasi (kelas .is-navigated pada .app);
+   konten prerender saat halaman pertama kali dibuka langsung tampil utuh. */
+.app.is-navigated .reveal {
   animation: fade-up var(--dur-4) var(--ease-out) both;
   animation-delay: calc(min(var(--i, 0), 12) * 40ms);
 }

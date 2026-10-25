@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react';
+import { useClientValue } from './useHydrated.js';
 
 const doc = typeof document !== 'undefined' ? document : null;
 
@@ -32,7 +33,7 @@ const getServerSnapshot = () => false;
  */
 export function useFullscreen() {
   const isFullscreen = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const supported = fullscreenSupported();
+  const supported = useClientValue(fullscreenSupported, false);
 
   const enter = useCallback(async () => {
     const el = document.documentElement;
